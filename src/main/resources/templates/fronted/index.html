@@ -2,87 +2,112 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="zh_CN">
 
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<meta http-equiv="content-type" content="text/html;charset=utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<title>连接到一个主机</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>连接到一个主机</title>
 
-	<!-- 自定义样式 -->
-	<link rel="stylesheet" type="text/css" href="/static/assets/css/index_style.css">
-	<link rel="shortcut icon" href="/static/assets/img/favicon.ico"> 
-	
-	<script type="text/javascript" src="/static/plugins/jquery/jquery-3.4.1.min.js"></script>
-	<!-- 矢量函数库 -->
-	<script type="text/javascript" src="/static/plugins/vector/vector.js"></script>
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" type="text/css" href="/static/assets/css/index_style.css">
+    <link rel="shortcut icon" href="/static/assets/img/favicon.ico">
 
-	<script src="/static/assets/js/jssh.js" charset="utf-8"></script>
-	
-	<!-- xterm库 -->
-	<link rel="stylesheet" href="/static/plugins/xterm/xterm.css" />
-	<script src="/static/plugins/xterm/xterm.js" charset="utf-8"></script>
-	<!-- layui库 -->
-	<script src="/static/plugins/layui/layui.js"></script>
+    <script type="text/javascript" src="/static/plugins/jquery/jquery-3.4.1.min.js"></script>
+    <!-- 矢量函数库 -->
+    <script type="text/javascript" src="/static/plugins/vector/vector.js"></script>
+
+    <script src="/static/assets/js/jssh.js" charset="utf-8"></script>
+
+    <!-- xterm库 -->
+    <link rel="stylesheet" href="/static/plugins/xterm/xterm.css"/>
+    <script src="/static/plugins/xterm/xterm.js" charset="utf-8"></script>
+    <!-- layui库 -->
+    <script src="/static/plugins/layui/layui.js"></script>
 </head>
 
 <body>
 
-	<div id="container" style="width: 100%; height: 100%">
-		<div id="output">
-			<script type="text/javascript">
-				// 渲染背景
-				$(function () {
-					var victor=Victor("container", "output");
-					
-					// 焦点获取
-					$("#host").focus();
-		
-					// 监听enter键
-					$(document).keydown(function (event) {
-						if (event.keyCode == 13) {
-							$("#btn").click();
-						}
-					});
-				});
-			</script>
-		</div>
-	</div>
+<div id="container" style="width: 100%; height: 100%">
+    <div id="output">
+        <script type="text/javascript">
+            // 渲染背景
+            $(function () {
+                var victor = Victor("container", "output");
 
-	<script type="text/javascript">
-	// 打开弹出层
-	layui.use('layer', function(){
-		  var layer = layui.layer;
-		  layer.open({
-			  type: 1,
-			  title:"",
-			  closeBtn: 0,
-			  // maxmin: true,
-			  // moveOut: true,
-			  content: $('#entry_form') 
-			  // 这里content是一个DOM，注意：最好该元素要存放在body最外层，否则可能被其它的相对元素所影响
-			});
-		}); 
-	
-		
-	</script>
+                // 焦点获取
+                $("#host").focus();
+
+                // 监听enter键
+                $(document).keydown(function (event) {
+                    if (event.keyCode == 13) {
+                        $("#btn").click();
+                    }
+                });
+            });
+        </script>
+    </div>
+</div>
+
+<script type="text/javascript">
+    // 打开弹出层
+    layui.use('layer', function () {
+        var layer = layui.layer;
+        layer.open({
+            type: 1,
+            title: "",
+            closeBtn: 0,
+            // maxmin: true,
+            // moveOut: true,
+            content: $('#entry_form')
+            // 这里content是一个DOM，注意：最好该元素要存放在body最外层，否则可能被其它的相对元素所影响
+        });
+    });
+
+
+</script>
 
 </body>
-	<!-- 为了防止出现位置的相对改变，放在body外面 -->
-	<div class="containerT" id="con">
-		<form class="form" id="entry_form"  th:action="@{/connect}" method="post">
-		<h1 style="margin:top">远程登录</h1>
-			ip地址<input type="text" placeholder="host" id="host" name="host" value="192.168.222.130"  required="required">
-			端口<input type="number" max="65535" min="0" placeholder="port" id="port" name="port" value="22"  required="required"> 
-			用户名 <input type="text" placeholder="username" id="username" name="username"	value="root"  required="required">
-			密码<input type="password" placeholder="密码" id="password" name="password" value="root"  >
-			<input type="hidden"  id="command" name="command" value="">
-			<input type="hidden"  id="operate" name="operate" value="connect">
-			<button type="submit" id="btn">连接</button>
-			<!-- <button  id="test">测试连接</button> -->
-			<div id="prompt" class="prompt"></div>
-		</form>
-	</div>
-	<script type="text/javascript">
-		//openTerminal1("connect",$("host").val,"container");
-	</script>
+<!-- 为了防止出现位置的相对改变，放在body外面 -->
+<div class="containerT" id="con">
+    <form class="layui-form" id="entry_form" lay-filter="frm" th:action="@{/connect}" method="post">
+        <div class="layui-inline">
+            <h1>远程登录</h1>
+        </div>
+        <div class="layui-inline">
+            ip地址<input type="text" placeholder="host" name="host" value="192.168.222.130" required="required">
+        </div>
+        端口<input type="number" max="65535" min="0" placeholder="port" name="port" value="22" required="required">
+        用户名 <input type="text" placeholder="username" name="username" value="root" required="required">
+        密码<input type="password" placeholder="密码" name="password" value="root">
+        <input type="hidden" id="command" name="command" value="">
+        <input type="hidden" id="operate" name="operate" value="connect">
+        <button lay-submit lay-filter="*" type="submit" id="btn">连接</button>
+        <!-- <button  id="test">测试连接</button> -->
+        <div id="prompt" class="prompt"></div>
+    </form>
+</div>
+<script>
+    layui.use(['form', 'layer'], function () {
+        var $ = layui.$;
+        var form = layui.form;
+        var layer = layui.layer;
+        //方法提交
+        $('#btn').on('click', function (data) {
+            var frmData = form.val("frm");
+            var res = false;
+            $.post(
+                "testConnect", frmData,
+                function (data) {
+                    if (data.res == "true") {
+                        res = true;
+                    } else {
+                        layer.alert("无法连接到主机：" + frmData["host"] +"\n错误信息为: " + data.msg);
+                    }
+                }
+            );
+
+            return res;
+        });
+    });
+</script>
 
 </html>

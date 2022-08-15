@@ -2,25 +2,32 @@ package cn.objectspace.webssh.controller;
 
 import cn.objectspace.webssh.constant.ConstantPool;
 import cn.objectspace.webssh.pojo.WebSSHData;
+import cn.objectspace.webssh.service.WebSSHService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 public class RouterController {
+    @Resource
+    WebSSHService webSSHService;
+
     @GetMapping("/")
-    public String index(){
+    public String index() {
         return "fronted/index";
     }
 
     /*
      * 得到前端返回连接的数据,并将数据传送到另一个页面
-     *
      * @param data 得到前端表格传入的参数
-     *
-     * @param model 将前端参数注入到请求中
-     *
+     * @Author: fuchengjie
      * @return 返回模拟终端的页面
      */
     @RequestMapping("/connect")
@@ -29,5 +36,18 @@ public class RouterController {
         model.addAttribute("data", data);
         ConstantPool.SSH_DATA = data;
         return "fronted/terminal";
+    }
+
+    /*
+     * 在正式连接前先测试是否可以连接
+     * @param data 得到前端表格传入的参数
+     * @Author: fuchengjie
+     * @date 2022-8-15 19:07:53
+     * @return 是否连接成功
+     */
+    @PostMapping("/testConnect")
+    @ResponseBody
+    public Object testConnect(WebSSHData data) {
+        return webSSHService.testConnect(data);
     }
 }

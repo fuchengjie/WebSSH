@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -127,6 +128,62 @@ public class WebSSHServiceImpl implements WebSSHService {
             //map中移除
             sshMap.remove(userId);
         }
+    }
+
+    @Override
+    public Map<String, String> testConnect(WebSSHData data) {
+        String username = data.getUsername();
+        String password = data.getPassword();
+        String host = data.getHost();
+        int port = data.getPort();
+
+        // 创建JSch对象
+        JSch jSch = new JSch();
+        Session jSchSession = null;
+        Map<String, String> map = new HashMap<>();
+        boolean res = false;
+
+        try {
+            // 根据主机账号、ip、端口获取一个Session对象
+            jSchSession = jSch.getSession(username, host, port);
+
+            // 存放主机密码
+            jSchSession.setPassword(password);
+
+            Properties config = new Properties();
+
+            // 去掉首次连接确认
+            config.put("StrictHostKeyChecking", "no");
+
+            jSchSession.setConfig(config);
+
+            // 超时连接时间为3秒
+            jSchSession.setTimeout(3000);
+
+            // 进行连接
+            jSchSession.connect();
+
+            // 获取连接结果
+            res = jSchSession.isConnected();
+            map.put("res", String.valueOf(res));
+        } catch (JSchException e) {
+            logger.warn(e.getMessage());
+            map.put("msg", e.getMessage());
+        } finally {
+            // 关闭jschSesson流
+            if (jSchSession != null && jSchSession.isConnected()) {
+                jSchSession.disconnect();
+            }
+            if (res) {
+                logger.error("测试SSH连接: " + host + "连接成功");
+            } else {
+                logger.error("测试SSH连接: " + host + "连接失败");
+            }
+
+            // 返回到前端的数据
+            return map;
+        }
+
     }
 
     /**
