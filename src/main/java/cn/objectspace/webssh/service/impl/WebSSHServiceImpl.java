@@ -26,10 +26,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
-* @Description: WebSSH业务逻辑实现
-* @Author: NoCortY
-* @Date: 2020/3/8
-*/
+ * @Description: WebSSH业务逻辑实现
+ * @Author: NoCortY
+ * @Date: 2020/3/8
+ */
 @Service
 public class WebSSHServiceImpl implements WebSSHService {
     //存放ssh连接信息的map
@@ -85,7 +85,8 @@ public class WebSSHServiceImpl implements WebSSHService {
                 @Override
                 public void run() {
                     try {
-                        connectToSSH(sshConnectInfo, finalWebSSHData, session);
+                        boolean res = connectToSSH(sshConnectInfo, finalWebSSHData, session);
+                        logger.info("webssh连接状态" + res);
                     } catch (JSchException | IOException e) {
                         logger.error("webssh连接异常");
                         logger.error("异常信息:{}", e.getMessage());
@@ -135,7 +136,7 @@ public class WebSSHServiceImpl implements WebSSHService {
      * @Author: NoCortY
      * @Date: 2020/3/7
      */
-    private void connectToSSH(SSHConnectInfo sshConnectInfo, WebSSHData webSSHData, WebSocketSession webSocketSession) throws JSchException, IOException {
+    private boolean connectToSSH(SSHConnectInfo sshConnectInfo, WebSSHData webSSHData, WebSocketSession webSocketSession) throws JSchException, IOException {
         Session session = null;
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");
@@ -152,6 +153,9 @@ public class WebSSHServiceImpl implements WebSSHService {
 
         //通道连接 超时时间3s
         channel.connect(3000);
+
+        // 获取连接状态
+        boolean res = channel.isConnected();
 
         //设置channel
         sshConnectInfo.setChannel(channel);
@@ -178,7 +182,7 @@ public class WebSSHServiceImpl implements WebSSHService {
                 inputStream.close();
             }
         }
-
+        return res;
     }
 
     /**

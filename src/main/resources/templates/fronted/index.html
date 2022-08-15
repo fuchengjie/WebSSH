@@ -66,13 +66,11 @@
 	</script>
 
 </body>
-
 	<!-- 为了防止出现位置的相对改变，放在body外面 -->
 	<div class="containerT" id="con">
-		
 		<form class="form" id="entry_form"  th:action="@{/connect}" method="post">
-		<h1 style="margin:top">JSSH远程登录</h1>
-			ip地址<input type="text" placeholder="host" id="host" name="host" value="192.168.0.150"  required="required"> 
+		<h1 style="margin:top">远程登录</h1>
+			ip地址<input type="text" placeholder="host" id="host" name="host" value="192.168.222.130"  required="required">
 			端口<input type="number" max="65535" min="0" placeholder="port" id="port" name="port" value="22"  required="required"> 
 			用户名 <input type="text" placeholder="username" id="username" name="username"	value="root"  required="required">
 			密码<input type="password" placeholder="密码" id="password" name="password" value="root"  >

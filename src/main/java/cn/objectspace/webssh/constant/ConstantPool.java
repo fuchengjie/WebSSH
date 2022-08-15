@@ -1,5 +1,7 @@
 package cn.objectspace.webssh.constant;
 
+import cn.objectspace.webssh.pojo.WebSSHData;
+
 /**
 * @Description: 常量池
 * @Author: NoCortY
@@ -10,6 +12,10 @@ public class ConstantPool {
      * 随机生成uuid的key名
      */
     public static final String USER_UUID_KEY = "user_uuid";
+    /**
+     * 用户连接的信息
+     */
+    public static WebSSHData SSH_DATA = null;
     /**
      * 发送指令：连接
      */

@@ -1,7 +1,14 @@
 server:
-  port: 8080
-spring:
-  mvc:
-    view:
-      prefix: /page/
+  port: 80
+spring: 
+  mvc: 
+    # 静态文件配置位置，如果不配置将无法访问到js,css等，但是可以通过th:src="@{}"访问
+    static-path-pattern: /static/**
+    thymeleaf:
+      # 关闭缓存，部署应该开启
+      cache: false
+      # 非严格模式的HTML语法检查
+      mode: LEGACYHTML5
+      prefix: classpath:/templates/
       suffix: .html
+      encoding: UTF-8

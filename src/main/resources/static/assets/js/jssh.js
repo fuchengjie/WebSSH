@@ -8,7 +8,7 @@ WSSHClient.prototype._generateEndpoint = function () {
         var protocol = 'ws://';
     }
     // socket的地址以及端口
-    var endpoint = protocol + '127.0.0.1:80/jssh';
+    var endpoint = protocol + '127.0.0.1:80/webssh';
     return endpoint;
 };
 
