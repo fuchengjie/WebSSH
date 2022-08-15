@@ -1,7 +1,7 @@
 package cn.objectspace.webssh.controller;
 
 import cn.objectspace.webssh.constant.ConstantPool;
-import cn.objectspace.webssh.pojo.WebSSHData;
+import cn.objectspace.webssh.pojo.HostData;
 import cn.objectspace.webssh.service.WebSSHService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 
 @Controller
 public class RouterController {
@@ -31,7 +29,7 @@ public class RouterController {
      * @return 返回模拟终端的页面
      */
     @RequestMapping("/connect")
-    public String connect(WebSSHData data, Model model) throws Exception {
+    public String connect(HostData data, Model model) throws Exception {
         // 添加参数，这样thymeleaf可以解析到对象的值,注意添加的值要是Map形式的，否则前端无法解析就会出错
         model.addAttribute("data", data);
         ConstantPool.SSH_DATA = data;
@@ -47,7 +45,7 @@ public class RouterController {
      */
     @PostMapping("/testConnect")
     @ResponseBody
-    public Object testConnect(WebSSHData data) {
+    public Object testConnect(HostData data) {
         return webSSHService.testConnect(data);
     }
 }

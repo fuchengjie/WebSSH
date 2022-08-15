@@ -2,7 +2,7 @@ package cn.objectspace.webssh.service.impl;
 
 import cn.objectspace.webssh.constant.ConstantPool;
 import cn.objectspace.webssh.pojo.SSHConnectInfo;
-import cn.objectspace.webssh.pojo.WebSSHData;
+import cn.objectspace.webssh.pojo.HostData;
 import cn.objectspace.webssh.service.WebSSHService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.Channel;
@@ -68,9 +68,9 @@ public class WebSSHServiceImpl implements WebSSHService {
     @Override
     public void recvHandle(String buffer, WebSocketSession session) {
         ObjectMapper objectMapper = new ObjectMapper();
-        WebSSHData webSSHData = null;
+        HostData webSSHData = null;
         try {
-            webSSHData = objectMapper.readValue(buffer, WebSSHData.class);
+            webSSHData = objectMapper.readValue(buffer, HostData.class);
         } catch (IOException e) {
             logger.error("Json转换异常");
             logger.error("异常信息:{}", e.getMessage());
@@ -81,7 +81,7 @@ public class WebSSHServiceImpl implements WebSSHService {
             //找到刚才存储的ssh连接对象
             SSHConnectInfo sshConnectInfo = (SSHConnectInfo) sshMap.get(userId);
             //启动线程异步处理
-            WebSSHData finalWebSSHData = webSSHData;
+            HostData finalWebSSHData = webSSHData;
             executorService.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -131,7 +131,7 @@ public class WebSSHServiceImpl implements WebSSHService {
     }
 
     @Override
-    public Map<String, String> testConnect(WebSSHData data) {
+    public Map<String, String> testConnect(HostData data) {
         String username = data.getUsername();
         String password = data.getPassword();
         String host = data.getHost();
@@ -141,6 +141,8 @@ public class WebSSHServiceImpl implements WebSSHService {
         JSch jSch = new JSch();
         Session jSchSession = null;
         Map<String, String> map = new HashMap<>();
+        map.put("res", "");
+        map.put("msg", "");
         boolean res = false;
 
         try {
@@ -175,15 +177,14 @@ public class WebSSHServiceImpl implements WebSSHService {
                 jSchSession.disconnect();
             }
             if (res) {
-                logger.error("测试SSH连接: " + host + "连接成功");
+                logger.error("测试SSH连接: " + host + " 连接成功");
             } else {
-                logger.error("测试SSH连接: " + host + "连接失败");
+                logger.error("测试SSH连接: " + host + " 连接失败");
             }
 
             // 返回到前端的数据
             return map;
         }
-
     }
 
     /**
@@ -193,7 +194,7 @@ public class WebSSHServiceImpl implements WebSSHService {
      * @Author: NoCortY
      * @Date: 2020/3/7
      */
-    private boolean connectToSSH(SSHConnectInfo sshConnectInfo, WebSSHData webSSHData, WebSocketSession webSocketSession) throws JSchException, IOException {
+    private boolean connectToSSH(SSHConnectInfo sshConnectInfo, HostData webSSHData, WebSocketSession webSocketSession) throws JSchException, IOException {
         Session session = null;
         Properties config = new Properties();
         config.put("StrictHostKeyChecking", "no");

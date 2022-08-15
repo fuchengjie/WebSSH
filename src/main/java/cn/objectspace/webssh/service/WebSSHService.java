@@ -1,6 +1,6 @@
 package cn.objectspace.webssh.service;
 
-import cn.objectspace.webssh.pojo.WebSSHData;
+import cn.objectspace.webssh.pojo.HostData;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -52,10 +52,10 @@ public interface WebSSHService {
 
     /**
      * @Description: 测试连接
-     * @Param:
+     * @Param: 主机信息
      * @return: 是否能够连接成功
      * @Author: fuchengjie
      * @Date: 2022-8-15 19:00:05
      */
-    public Map<String, String> testConnect(WebSSHData data);
+    public Map<String, String> testConnect(HostData data);
 }

@@ -1,6 +1,6 @@
 package cn.objectspace.webssh.constant;
 
-import cn.objectspace.webssh.pojo.WebSSHData;
+import cn.objectspace.webssh.pojo.HostData;
 
 /**
 * @Description: 常量池
@@ -15,7 +15,7 @@ public class ConstantPool {
     /**
      * 用户连接的信息
      */
-    public static WebSSHData SSH_DATA = null;
+    public static HostData SSH_DATA = null;
     /**
      * 发送指令：连接
      */

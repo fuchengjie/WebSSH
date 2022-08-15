@@ -5,7 +5,7 @@ package cn.objectspace.webssh.pojo;
 * @Author: NoCortY
 * @Date: 2020/3/8
 */
-public class WebSSHData {
+public class HostData {
     //操作
     private String operate;
     private String host;
