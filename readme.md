@@ -7,6 +7,10 @@
 2. 终端显示优化
 ![image](https://user-images.githubusercontent.com/31361595/184619160-1df7604d-9a88-435d-8ac2-592161d9eadf.png)
 
+架构图
+![image](https://user-images.githubusercontent.com/31361595/184622254-99fe8b44-c4d1-45f0-a1c9-4c0d742490f5.png)
+
+
 欢迎大家提issue和pr
 <br><br><br><br><br><br><br><br><br><br>
 
