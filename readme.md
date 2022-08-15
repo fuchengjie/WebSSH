@@ -7,7 +7,11 @@
 2. 终端显示优化
 ![image](https://user-images.githubusercontent.com/31361595/184619160-1df7604d-9a88-435d-8ac2-592161d9eadf.png)
 
-架构图
+3. 当无法连接到主机时，登录界面显示错误信息
+![image](https://user-images.githubusercontent.com/31361595/184631740-4f45d221-4fa7-4076-86b1-2d5cc4ef6dff.png)
+
+
+技术架构图
 ![image](https://user-images.githubusercontent.com/31361595/184622254-99fe8b44-c4d1-45f0-a1c9-4c0d742490f5.png)
 
 
