@@ -1,9 +1,11 @@
 # 由于原作者超过两年没有更新此项目，也没有解决issue和pr，所以我就自己fork了一个，并且对前端界面进行了优化
 目前添加的功能有：
 1. 前端登录界面
-![img.png](img.png)
+![image](https://user-images.githubusercontent.com/31361595/184619139-4924eabb-67a2-4f5b-8ba3-eee25ea0a205.png)
+
+
 2. 终端显示优化
-![img_1.png](img_1.png)
+![image](https://user-images.githubusercontent.com/31361595/184619160-1df7604d-9a88-435d-8ac2-592161d9eadf.png)
 
 从此行开始为原作者的话
 <hr />
