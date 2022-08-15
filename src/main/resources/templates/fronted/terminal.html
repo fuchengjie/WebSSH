@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<title>JSSH</title>
+
+	<link rel="shortcut icon" href="/static/assets/img/favicon.ico"> 
+	
+	<script src="/static/plugins/jquery/jquery-3.4.1.min.js" charset="utf-8"></script>
+	<script src="/static/assets/js/jssh.js" charset="utf-8"></script>
+
+	<link rel="stylesheet" href="/static/plugins/xterm/xterm.css" />
+	<script src="/static/plugins/xterm/xterm.js" charset="utf-8"></script>
+	<script src="/static/plugins/layui/layui.js"></script> 
+
+</head>
+
+
+<body class="layui-layout-body">
+
+
+
+	
+	<div id="container" class="layui-body" style="width: 100%; height: 100%">
+	
+	</div>
+	
+	<script th:inline="javascript">
+	<!--/*--> 模板引擎取得值，到这里已经实现了最基本的功能：输入用户名密码进行登录主机	<!--*/-->
+		openTerminal1("connect", [[${data.host}]],[[${data.port}]],[[${data.username}]],
+				[[${data.password}]],"container");
+	</script>
+	
+	
+</body>
+
+</html>
