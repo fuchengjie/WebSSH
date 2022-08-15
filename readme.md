@@ -15,7 +15,7 @@
 ![image](https://user-images.githubusercontent.com/31361595/184622254-99fe8b44-c4d1-45f0-a1c9-4c0d742490f5.png)
 
 
-欢迎大家提issue和pr
+欢迎大家提issue和pr，每一个我都会认真的看的
 <br><br><br><br><br><br><br><br><br><br>
 
 从此行开始为原作者的话
