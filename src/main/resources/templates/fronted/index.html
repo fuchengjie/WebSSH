@@ -69,19 +69,30 @@
 <!-- 为了防止出现位置的相对改变，放在body外面 -->
 <div class="containerT" id="con">
     <form class="layui-form" id="entry_form" lay-filter="frm" th:action="@{/connect}" method="post">
-        <div class="layui-inline">
-            <h1>远程登录</h1>
+
+        <div class="layui-form-item">
+            <label class="layui-icon layui-icon-username">主机名</label>
+            <input class="layui-input" type="text" name="host" id="host" required="required" value="192.168.222.130">
         </div>
-        <div class="layui-inline">
-            ip地址<input type="text" placeholder="host" name="host" value="192.168.222.130" required="required">
+
+        <div class="layui-form-item">
+            <label class="layui-icon layui-icon-username" >端口</label>
+            <input class="layui-input" required="required" max="65535" min="0" type="number" name="port" id="port" value="22">
         </div>
-        端口<input type="number" max="65535" min="0" placeholder="port" name="port" value="22" required="required">
-        用户名 <input type="text" placeholder="username" name="username" value="root" required="required">
-        密码<input type="password" placeholder="密码" name="password" value="root">
+
+        <div class="layui-form-item">
+            <label class="layui-icon layui-icon-username" >用户名</label>
+            <input class="layui-input" required="required" type="text" name="port" id="username" value="root">
+        </div>
+
+        <div class="layui-form-item">
+            <label class="layui-icon layui-icon-username" >密码</label>
+            <input class="layui-input" required="required" type="password" name="password" id="password" value="root">
+        </div>
+
         <input type="hidden" id="command" name="command" value="">
         <input type="hidden" id="operate" name="operate" value="connect">
         <button lay-submit lay-filter="*" type="submit" id="btn">连接</button>
-        <!-- <button  id="test">测试连接</button> -->
         <div id="prompt" class="prompt"></div>
     </form>
 </div>
