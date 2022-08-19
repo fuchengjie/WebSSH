@@ -177,7 +177,7 @@ public class WebSSHServiceImpl implements WebSSHService {
                 jSchSession.disconnect();
             }
             if (res) {
-                logger.error("测试SSH连接: " + host + " 连接成功");
+                logger.info("测试SSH连接: " + host + " 连接成功");
             } else {
                 logger.error("测试SSH连接: " + host + " 连接失败");
             }
