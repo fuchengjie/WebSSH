@@ -15,6 +15,8 @@
 技术架构图
 ![image](https://user-images.githubusercontent.com/31361595/184622254-99fe8b44-c4d1-45f0-a1c9-4c0d742490f5.png)
 
+解决的问题：
+1.浏览器和SpringBoot的WebSocket连接会通过接口获取服务器的地址，而不是直接写死为127.0.0.1，这样至少在同一个局域网中可以有多个浏览器来访问服务器；在公网上效果如何，我并没有进行测试，有条件的可以试试。
 
 欢迎大家提issue和pr，每一个我都会认真的看的
 <br><br><br><br><br><br><br><br><br><br>
