@@ -21,7 +21,7 @@ public interface WebSSHService {
      * @Author: NoCortY
      * @Date: 2020/3/7
      */
-    public void initConnection(WebSocketSession session);
+    void initConnection(WebSocketSession session);
 
     /**
      * @Description: 处理客户段发的数据
@@ -30,7 +30,7 @@ public interface WebSSHService {
      * @Author: NoCortY
      * @Date: 2020/3/7
      */
-    public void recvHandle(String buffer, WebSocketSession session);
+    void recvHandle(String buffer, WebSocketSession session);
 
     /**
      * @Description: 数据写回前端 for websocket
@@ -39,7 +39,7 @@ public interface WebSSHService {
      * @Author: NoCortY
      * @Date: 2020/3/7
      */
-    public void sendMessage(WebSocketSession session, byte[] buffer) throws IOException;
+    void sendMessage(WebSocketSession session, byte[] buffer) throws IOException;
 
     /**
      * @Description: 关闭连接
@@ -48,7 +48,7 @@ public interface WebSSHService {
      * @Author: NoCortY
      * @Date: 2020/3/7
      */
-    public void close(WebSocketSession session);
+    void close(WebSocketSession session);
 
     /**
      * @Description: 测试连接
@@ -57,5 +57,7 @@ public interface WebSSHService {
      * @Author: fuchengjie
      * @Date: 2022-8-15 19:00:05
      */
-    public Map<String, String> testConnect(HostData data);
+    Map<String, String> testConnect(HostData data);
+
+
 }
