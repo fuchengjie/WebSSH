@@ -24,7 +24,7 @@ WSSHClient.prototype.connect = function (options) {
     };
 
     this._connection.onmessage = function (evt) {
-        var data = evt.data.toString();
+        const data = evt.data.toString();
         //data = base64.decode(data);
         options.onData(data);
     };
@@ -56,10 +56,10 @@ WSSHClient.prototype.sendClientData = function (data) {
 var client = new WSSHClient();
 
 // 打开模拟终端
-function openTerminal1(operate1, host1, port1, username1, password1, id) {
+function openTerminal(operate1, host1, port1, username1, password1, id) {
 
     // 黑框框
-    openTerminal({
+    internalFunc({
         operate: operate1,
         host: host1,// IP
         port: port1,// 端口号
@@ -67,7 +67,7 @@ function openTerminal1(operate1, host1, port1, username1, password1, id) {
         password: password1 // 密码
     });
 
-    function openTerminal(options) {
+    function internalFunc(options) {
         // 新建客户端的socket
         var client = new WSSHClient();
         var term = new Terminal({

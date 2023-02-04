@@ -107,7 +107,7 @@
 	</div>
 <!--	模板引擎取得值，到这里已经实现了最基本的功能：输入用户名密码进行登录主机-->
 	<script th:inline="javascript">
-		openTerminal1("connect", [[${data.host}]],[[${data.port}]],[[${data.username}]],
+		openTerminal("connect", [[${data.host}]],[[${data.port}]],[[${data.username}]],
 				[[${data.password}]],"container");
 	</script>
 </body>
