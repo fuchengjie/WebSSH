@@ -1,37 +1,10 @@
 function WSSHClient() {
-};
+}
 
 WSSHClient.prototype._generateEndpoint = function () {
-    if (window.location.protocol == 'https:') {
-        var protocol = 'wss://';
-    } else {
-        var protocol = 'ws://';
-    }
-    // socket的地址以及端口
+    const wssProtocol = window.location.protocol === 'https:'? 'wss://':'ws://';
 
-    // 获取服务器的ip地址
-    var ip = 'localhost'
-    let xhr = new XMLHttpRequest(); // 创建XHR对象
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4) { // 4表示此次请求结束
-            let result = JSON.parse(this.responseText);// 后端返回的结果为字符串，这里将结果转换为json
-            ip = result["ip"];
-        }
-    };
-    xhr.open( // 打开链接
-        "post",
-        "getIp", // 后端地址
-        false
-    );
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded"); // 设置请求头
-    xhr.send( // 设置需要携带到后端的字段，字符串形式
-        "username="+ "asd" +
-        "&password="+ "123456" // 注意：字段之间需要加上 “ & ” 字符
-    );
-
-    var endpoint = protocol + ip + '/webssh';
-    console.log(endpoint);
-    return endpoint;
+    return wssProtocol +  window.location.host + '/webssh'; // js可以直接获取服务器的地址
 };
 
 WSSHClient.prototype.connect = function (options) {
@@ -57,7 +30,7 @@ WSSHClient.prototype.connect = function (options) {
     };
 
 
-    this._connection.onclose = function (evt) {
+    this._connection.onclose = function () {
         options.onClose();
     };
 };
