@@ -1,64 +1,5 @@
-function WSSHClient() {
-}
-
-WSSHClient.prototype._generateEndpoint = function () {
-    const wssProtocol = window.location.protocol === 'https:'? 'wss://':'ws://';
-
-    return wssProtocol +  window.location.host + '/webssh'; // js可以直接获取服务器的地址
-};
-
-WSSHClient.prototype.connect = function (options) {
-    const endpoint = this._generateEndpoint();
-
-    if (window.WebSocket) {
-        //如果支持websocket
-        this._connection = new WebSocket(endpoint);
-    } else {
-        //否则报错
-        options.onError('WebSocket Not Supported');
-        return;
-    }
-
-    this._connection.onopen = function () {
-        options.onConnect();
-    };
-
-    this._connection.onmessage = function (evt) {
-        const data = evt.data.toString();
-        //data = base64.decode(data);
-        options.onData(data);
-    };
-
-
-    this._connection.onclose = function () {
-        options.onClose();
-    };
-};
-
-WSSHClient.prototype.send = function (data) {
-    // json序列化数据
-    this._connection.send(JSON.stringify(data));
-};
-
-WSSHClient.prototype.sendInitData = function (options) {
-    //连接参数
-    this._connection.send(JSON.stringify(options));
-}
-
-WSSHClient.prototype.sendClientData = function (data) {
-    //发送指令
-    this._connection.send(JSON.stringify({
-        "operate": "command",
-        "command": data
-    }))
-}
-
-const client = new WSSHClient();
-
-// 打开模拟终端
+// 在前端打开模拟终端
 function openTerminal(operate, host, port, username, password, id) {
-
-    // 黑框框
     internalFunc({
         operate: operate, // 指令，默认为connect
         host: host,// IP
@@ -71,9 +12,7 @@ function openTerminal(operate, host, port, username, password, id) {
         // 新建客户端的socket
         const client = new WSSHClient();
         const term = new Terminal({
-            cols: 97,
-            rows: 37,
-            cursorBlink: true, // 光标闪烁
+            cols: 97, rows: 37, cursorBlink: true, // 光标闪烁
             cursorStyle: "block", // 光标样式  null | 'block' | 'underline' | 'bar'
             scrollback: 800, //回滚
             tabStopWidth: 8, //制表宽度
@@ -88,27 +27,78 @@ function openTerminal(operate, host, port, username, password, id) {
         // true代表是否聚集在光标的位置 ，不加会有warning
         term.open(document.getElementById(id), true);
 
-        //在页面上显示连接中...
+        // 在页面上显示连接中...
         term.write('Connecting...\r\n');
 
-        //执行连接操作
+        // 执行连接操作
         client.connect({
             onError: function (error) {
-                // 连接失败回调
+                // 连接失败
                 term.write('Error: ' + error + '\r\n');
-            },
-            onConnect: function () {
-                // 连接成功回调
+            }, onConnect: function () {
+                // 连接成功
                 client.sendInitData(options);
-            },
-            onClose: function () {
-                // 连接关闭回调
+            }, onClose: function () {
+                // 连接关闭
                 term.write("\r\nconnection has closed...");
-            },
-            onData: function (data) {
-                // 收到数据时回调
+            }, onData: function (data) {
+                // 收到数据时
                 term.write(data);
             }
         });
+    }
+}
+
+
+
+// websocket前端代码，负责发送字符串和处理结果
+class WSSHClient {
+    // 获取springboot服务器地址
+    getHost() {
+        const wssProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        return wssProtocol + window.location.host + '/webssh'; // js可以直接获取服务器的地址
+    }
+
+    connect(options) {
+        const host = this.getHost();
+
+        // 浏览器不支持websock就直接退出
+        if (window.WebSocket) {
+            this._connection = new WebSocket(host);
+        } else {
+            options.onError('WebSocket Not Supported');
+            return;
+        }
+
+        this._connection.onopen = function () {
+            options.onConnect();
+        };
+
+        this._connection.onmessage = function (evt) {
+            const data = evt.data.toString();
+            //data = base64.decode(data);
+            options.onData(data);
+        };
+
+        this._connection.onclose = function () {
+            options.onClose();
+        };
+    }
+
+    // 发送json序列化数据
+    send(data) {
+        this._connection.send(JSON.stringify(data));
+    }
+
+    // 连接参数
+    sendInitData(options) {
+        this._connection.send(JSON.stringify(options));
+    }
+
+    // 发送指令
+    sendClientData(data) {
+        this._connection.send(JSON.stringify({
+            "operate": "command", "command": data
+        }))
     }
 }
