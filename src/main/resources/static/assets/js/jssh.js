@@ -8,7 +8,7 @@ WSSHClient.prototype._generateEndpoint = function () {
 };
 
 WSSHClient.prototype.connect = function (options) {
-    var endpoint = this._generateEndpoint();
+    const endpoint = this._generateEndpoint();
 
     if (window.WebSocket) {
         //如果支持websocket
@@ -53,24 +53,24 @@ WSSHClient.prototype.sendClientData = function (data) {
     }))
 }
 
-var client = new WSSHClient();
+const client = new WSSHClient();
 
 // 打开模拟终端
-function openTerminal(operate1, host1, port1, username1, password1, id) {
+function openTerminal(operate, host, port, username, password, id) {
 
     // 黑框框
     internalFunc({
-        operate: operate1,
-        host: host1,// IP
-        port: port1,// 端口号
-        username: username1,// 用户名
-        password: password1 // 密码
+        operate: operate, // 指令，默认为connect
+        host: host,// IP
+        port: port,// 端口号
+        username: username,// 用户名
+        password: password // 密码
     });
 
     function internalFunc(options) {
         // 新建客户端的socket
-        var client = new WSSHClient();
-        var term = new Terminal({
+        const client = new WSSHClient();
+        const term = new Terminal({
             cols: 97,
             rows: 37,
             cursorBlink: true, // 光标闪烁
