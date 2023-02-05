@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:mo="https://gitee.com/aun/Timo" lang="zh-CN">
+<head th:replace="/common/template :: header(~{::title},~{::link},~{::style})">
+<!--  <link rel="stylesheet" th:href="@{/lib/zTree_v3/css/zTreeStyle/zTreeStyle.css}" type="text/css">-->
+</head>
+<body>
+<div class="layui-form">
+  <!--    提交已经完成的步骤-->
+  <form th:action="@{/upload}" method="post">
+    <input type="hidden" name="id" th:if="${id}" th:value="${id}"/>
+    <div class="layui-form-item">
+      <label class="layui-form-label required">完成人</label>
+      <div class="layui-input-inline">
+      </div>
+    </div>
+
+    <div class="layui-form-item timo-finally">
+      <button class="layui-btn ajax-submit"><i class="fa fa-check-circle"></i> 提交</button>
+      <button class="layui-btn btn-secondary close-popup"><i class="fa fa-times-circle"></i> 关闭</button>
+    </div>
+  </form>
+
+  <form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="multipartFile" id="multipartFile"/><br/>
+    <div class="layui-form-item">
+      <label class="layui-form-label required">完成人</label>
+      <div class="layui-input-inline">
+        <input type="submit" name="" id="" value="提交" />
+      </div>
+    </div>
+
+    <input type="hidden" name="host" th:value="${data.getHost()}">
+    <input type="hidden" name="port" th:value="${data.getPort()}">
+    <input type="hidden" name="username" th:value="${data.getUsername()}">
+    <input type="hidden" name="password" th:value="${data.getPassword()}">
+  </form>
+</div>
+<script th:replace="/common/template :: script"></script>
+<script type="text/javascript" th:src="@{/js/plugins/jquery-2.2.4.min.js}"></script>
+<script type="text/javascript" th:src="@{/lib/zTree_v3/js/jquery.ztree.core.min.js}"></script>
+<script type="text/javascript" th:src="@{/js/timoTree.js}"></script>
+<script>
+  // 渲染添加页面的任务和步骤选择框
+
+
+</script>
+
+<script type="text/javascript">
+  // 树形菜单
+  $.fn.selectTree();
+
+</script>
+</body>
+</html>
