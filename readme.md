@@ -1,14 +1,18 @@
 # 由于原作者超过两年没有更新此项目，也没有解决issue和pr，所以我就自己fork了一个，并且对前端界面进行了优化
-目前添加的功能有：
-1. 前端登录界面
+目前添加的功能有： 
+- 前端登录界面 
+- 终端显示优化
+- 文件传输功能，目前默认会传输到/tmp目录下，后面考虑传到家目录或者自定义目录
+   
+
+## 图片展示
+前端登陆界面
 ![image](https://user-images.githubusercontent.com/31361595/184635512-bdf7883b-52a1-4515-b380-6b9ba18bfa11.png)
 
-
-
-2. 终端显示优化
+终端显示优化
 ![image](https://user-images.githubusercontent.com/31361595/184619160-1df7604d-9a88-435d-8ac2-592161d9eadf.png)
 
-3. 当无法连接到主机时，登录界面显示错误信息
+当无法连接到主机时，登录界面显示错误信息
 ![image](https://user-images.githubusercontent.com/31361595/184631740-4f45d221-4fa7-4076-86b1-2d5cc4ef6dff.png)
 
 
@@ -41,12 +45,12 @@
 
 ```javascript
 openTerminal( {
-        /*operate:'connect',
-        host: '',//IP
-        port: '',//端口号
-        username: '',//用户名
-        password: ''//密码*/
-    });
+  /*operate:'connect',
+  host: '',//IP
+  port: '',//端口号
+  username: '',//用户名
+  password: ''//密码*/
+});
 ```
 
 ## 运行展示
@@ -72,6 +76,6 @@ openTerminal( {
   top命令：
 
   ![top命令](http://image.objectspace.cn/top%E5%91%BD%E4%BB%A4.png)
-  
+
 ## 写在最后
 欢迎各位大佬给我提issue，感谢！
