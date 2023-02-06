@@ -1,4 +1,5 @@
 // 在前端打开模拟终端
+
 function openTerminal(operate, host, port, username, password, id) {
     internalFunc({
         operate: operate, // 指令，默认为connect
@@ -12,7 +13,9 @@ function openTerminal(operate, host, port, username, password, id) {
         // 新建客户端的socket
         const client = new WSSHClient();
         const term = new Terminal({
-            cols: 97, rows: 37, cursorBlink: true, // 光标闪烁
+            cols: 100,
+            // rows: _this.cols, // 不指定可以自适应屏幕
+            cursorBlink: true, // 光标闪烁
             cursorStyle: "block", // 光标样式  null | 'block' | 'underline' | 'bar'
             scrollback: 800, //回滚
             tabStopWidth: 8, //制表宽度
