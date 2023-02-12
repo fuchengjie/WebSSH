@@ -11,7 +11,7 @@
 - 支持上传文件（transform file）
 
 ## 图片展示
-前端登陆界
+前端登陆界面
 ![image](https://user-images.githubusercontent.com/31361595/184635512-bdf7883b-52a1-4515-b380-6b9ba18bfa11.png)
 
 终端显示优化
