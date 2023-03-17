@@ -1,7 +1,7 @@
 // 在前端打开模拟终端
 
 function openTerminal(operate, host, port, username, password, id) {
-    internalFunc({
+    return internalFunc({
         operate: operate, // 指令，默认为connect
         host: host,// IP
         port: port,// 端口号
@@ -12,43 +12,46 @@ function openTerminal(operate, host, port, username, password, id) {
     function internalFunc(options) {
         // 新建客户端的socket
         const client = new WSSHClient();
-        const term = new Terminal({
+        const terminal = new Terminal({
             cols: 100,
             // rows: _this.cols, // 不指定可以自适应屏幕
             cursorBlink: true, // 光标闪烁
             cursorStyle: "block", // 光标样式  null | 'block' | 'underline' | 'bar'
             scrollback: 800, //回滚
             tabStopWidth: 8, //制表宽度
-            screenKeys: true
+            screenKeys: true,
+            onResize: true
         });
 
-        term.on('data', function (data) {
+        terminal.on('data', function (data) {
             // 键盘输入时的回调函数
             client.sendClientData(data);
         });
 
         // true代表是否聚集在光标的位置 ，不加会有warning
-        term.open(document.getElementById(id), true);
+        terminal.open(document.getElementById(id), true);
 
         // 在页面上显示连接中...
-        term.write('Connecting...\r\n');
+        terminal.write('Connecting...\r\n');
 
         // 执行连接操作
         client.connect({
             onError: function (error) {
                 // 连接失败
-                term.write('Error: ' + error + '\r\n');
+                terminal.write('Error: ' + error + '\r\n');
             }, onConnect: function () {
                 // 连接成功
                 client.sendInitData(options);
             }, onClose: function () {
                 // 连接关闭
-                term.write("\r\nconnection has closed...");
+                terminal.write("\r\nconnection has closed...");
             }, onData: function (data) {
                 // 收到数据时
-                term.write(data);
+                terminal.write(data);
             }
         });
+
+        return terminal;
     }
 }
 
