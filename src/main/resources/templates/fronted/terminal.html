@@ -101,10 +101,16 @@
         </div>
     </div>
 
-    <div class="layui-body" id="container">
+    <div class="layui-body">
         <!-- 内容主体区域 -->
         <div style="padding: 15px;">
             <span>连接主机为 [[${data.host}]] </span>
+        </div>
+        <div class="layui-row" style="margin-bottom: 10%">
+            <div class="layui-fluid">
+                <div class="layui-row"  id="container"></div>
+                <!--       终端显示         -->
+            </div>
         </div>
     </div>
 
@@ -114,8 +120,10 @@
 </div>
 
 </div>
+
 <!--模板引擎取得值，到这里已经实现了最基本的功能：输入用户名密码进行登录主机-->
-<script th:inline="javascript">
+<script th:inline="javascript" type="module">
+    // import { Terminal } from '/static/plugins/xterm/xterm.js';
     // <!--/* thymeleaf预处理获取连接的信息 */-->
     const host = [[${data.host}]];
     const port = [[${data.port}]];
@@ -123,7 +131,15 @@
     const password = [[${data.password}]];
 
     // <!--/* 默认会打开终端窗口 */-->
-    openTerminal("connect", host, port, username, password, "container");
+    const terminal = openTerminal("connect", host, port, username, password, "container");
+
+    // window.onresize = function() {
+    //
+    //     // this.terminal.fit();
+    //     // this.terminal.scrollToBottom();
+    //
+    // };
+    const fitAddon = new FitAddon();
 
     // <!--/* 定义上传函数 */-->
     function upload() {
