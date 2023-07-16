@@ -18,10 +18,7 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -131,7 +128,7 @@ public class WebSSHServiceImpl implements WebSSHService {
     }
 
     @Override
-    public Map<String, String> testConnect(HostData data) {
+    public Map<String, String> testConnect(HostData data) throws JSchException {
         String username = data.getUsername();
         String password = data.getPassword();
         String host = data.getHost();
@@ -139,6 +136,7 @@ public class WebSSHServiceImpl implements WebSSHService {
 
         // 创建JSch对象
         JSch jSch = new JSch();
+        jSch.addIdentity("/Users/fu/.ssh/id_rsa");
         Session jSchSession = null;
         Map<String, String> map = new HashMap<>();
         map.put("res", "");
@@ -201,6 +199,12 @@ public class WebSSHServiceImpl implements WebSSHService {
         //获取jsch的会话
         session = sshConnectInfo.getjSch().getSession(webSSHData.getUsername(), webSSHData.getHost(), webSSHData.getPort());
         session.setConfig(config);
+
+        // Have private key? 公钥登陆只能在本地，无法通过服务器来访问文件，jsch只允许传递一个文件的目录。
+        if(!Objects.isNull(sshConnectInfo.getPrivateKey())){
+            sshConnectInfo.getjSch().addIdentity(sshConnectInfo.getPrivateKey());
+        }
+
         //设置密码
         session.setPassword(webSSHData.getPassword());
         //连接  超时时间30s
