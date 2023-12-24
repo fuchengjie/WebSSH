@@ -1,7 +1,7 @@
 Since the original author hadn't updated the project in over two years and hadn't solved the issues and pr, I forked one myself and optimized the front-end interface.
 
 # README.md
-- zh_CN [简体中文](readme.zh_CN.md)
+## zh_CN [简体中文](readme.zh_CN.md)
 
 Currently added features are:
 - Front-end login page
