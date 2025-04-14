@@ -1,4 +1,4 @@
-# 由于原作者超过两年没有更新此项目，也没有解决issue和pr，所以我就自己fork了一个，并且对前端界面进行了优化
+
 
 # README.md
 - en [English](readme_en.md)
