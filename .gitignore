@@ -25,3 +25,51 @@ hs_err_pid*
 .idea/
 target/
 *.pptx
+
+# --- STS/Eclipse IDE generated files ---
+.settings/
+.project
+.classpath
+.springBeans
+.sts4-cache/
+bin/
+tmp/
+
+# --- Maven/Gradle build output ---
+target/
+build/
+out/
+*.jar
+*.war
+*.ear
+*.class
+effective-pom.xml
+
+# --- Dependency directories ---
+**/lib/
+**/libs/
+
+# --- Logs and temporary files ---
+*.log
+*.tmp
+*.swp
+*.bak
+*.orig
+
+# --- Environment files ---
+.env
+*.properties
+
+# --- IDE-specific files ---
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# --- Node.js/npm (if applicable) ---
+node_modules/
+npm-debug.log*
+
+# --- System files ---
+.DS_Store
+Thumbs.db
