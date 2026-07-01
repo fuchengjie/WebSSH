@@ -7,18 +7,27 @@
 目前添加的功能有： 
 - 前端登录界面 
 - 终端显示优化
-- 文件传输功能，目前默认会传输到/tmp目录下，后面考虑传到家目录或者自定义目录
+- 文件管理功能：支持查看远程目录、上传、下载、删除文件、创建目录，默认目录为 `/tmp/`，也可以手动切换到其他目录
 - 测试连接功能
 - 公钥登陆，因为jsch版本问题，你的id_rsa是"-----BEGIN OPENSSH PRIVATE KEY-----"开头，那么使用命令 `ssh-keygen -p -f <privateKeyFile> -m pem` 转换一下格式
 
 特色（feature）
 - 跨平台（cross platform）
 - 浏览器环境（browser-in）
-- 支持上传文件（transform file）
+- 支持远程文件管理（file manager）
+
+## AI 协助说明
+
+早期这个项目里，文件上传只把文件丢到服务器默认目录，界面上也看不到远程文件状态；终端自适应和文件列表这些 issue，当时作者自己技术储备有限，尤其对 xterm.js、自适应布局和 SFTP 管理理解不够深，所以一直没有做得很完整。
+
+这次修改由 AI 辅助完成：AI 直接重构了前后端文件管理逻辑，补上了远程目录浏览、上传位置提示、下载、删除、新建目录、终端自适应等能力。现在 AI 编程能力已经很强了，这类以前卡住很久的功能，可以直接让 AI 读代码、改代码、跑测试并验证效果。
 
 ## 图片展示
-前端登陆界面
-![image](https://user-images.githubusercontent.com/31361595/184635512-bdf7883b-52a1-4515-b380-6b9ba18bfa11.png)
+前端登录界面（AI 辅助重构）
+![前端登录界面](docs/readme-login-ai.png)
+
+终端和远程文件管理（AI 辅助重构）
+![终端和远程文件管理](docs/readme-file-manager.png)
 
 终端显示优化
 ![image](https://user-images.githubusercontent.com/31361595/184619160-1df7604d-9a88-435d-8ac2-592161d9eadf.png)

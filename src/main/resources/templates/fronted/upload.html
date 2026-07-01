@@ -2,148 +2,169 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>文件管理</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>远程文件管理</title>
     <link rel="shortcut icon" href="/static/assets/img/favicon.ico">
-    <script src="/static/plugins/jquery/jquery-3.4.1.min.js" charset="utf-8"></script>
-    <script src="/static/plugins/layui/layui.js"></script>
     <link rel="stylesheet" href="/static/plugins/layui/css/layui.css">
+    <script src="/static/plugins/jquery/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="/static/plugins/layui/layui.js" charset="utf-8"></script>
     <style>
-        body { padding: 15px; }
-        .op-btns a { margin-right: 6px; }
+        html, body { min-height: 100%; }
+        body { height: 100vh; margin: 0; padding: 18px; overflow: hidden; background: #f4f6f8; }
+        .manager { height: calc(100vh - 36px); min-height: 0; max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; background: #fff; border: 1px solid #e4e8f0; }
+        .header { padding: 16px 18px; border-bottom: 1px solid #edf0f5; }
+        .title { margin: 0 0 6px; font-size: 18px; font-weight: 600; color: #1f2937; }
+        .meta { color: #667085; font-size: 13px; }
+        .toolbar { display: grid; grid-template-columns: minmax(220px, 1fr) auto auto auto; gap: 8px; padding: 14px 18px; border-bottom: 1px solid #edf0f5; }
+        .uploadbar { display: flex; gap: 8px; align-items: center; padding: 0 18px 14px; border-bottom: 1px solid #edf0f5; }
+        .status { padding: 8px 18px; color: #596579; font-size: 13px; border-bottom: 1px solid #edf0f5; }
+        .status.error { color: #c0392b; }
+        .table-wrap { min-height: 0; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+        .file-name { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-name a { color: #1f6feb; cursor: pointer; }
+        .op-btns a, .op-btns button { margin-right: 6px; }
     </style>
 </head>
 <body>
+<div class="manager">
+    <div class="header">
+        <h1 class="title">远程文件管理</h1>
+        <div class="meta">[[${username}]]@[[${host}]]:[[${port}]]</div>
+    </div>
 
-<div class="layui-card">
-    <div class="layui-card-header">远程文件管理</div>
-    <div class="layui-card-body">
+    <div class="toolbar">
+        <input type="text" id="remotePath" th:value="${remotePath}" class="layui-input" autocomplete="off">
+        <button type="button" id="btnParent" class="layui-btn layui-btn-primary">上级</button>
+        <button type="button" id="btnRefresh" class="layui-btn layui-btn-normal">刷新</button>
+        <button type="button" id="btnMkdir" class="layui-btn layui-btn-primary">新目录</button>
+    </div>
 
-        <!-- 连接信息（隐藏，用于 JS 构造请求） -->
-        <input type="hidden" id="host" th:value="${host}">
-        <input type="hidden" id="port" th:value="${port}">
-        <input type="hidden" id="username" th:value="${username}">
-        <input type="hidden" id="password" th:value="${password}">
+    <div class="uploadbar">
+        <input type="file" id="multipartFile">
+        <button type="button" id="btnUpload" class="layui-btn">上传到当前目录</button>
+    </div>
 
-        <!-- 目录选择 -->
-        <div class="layui-form-item">
-            <label class="layui-form-label">远程目录</label>
-            <div class="layui-input-inline" style="width: 300px;">
-                <input type="text" id="remotePath" th:value="${remotePath}" placeholder="例如 /tmp/" autocomplete="off"
-                       class="layui-input">
-            </div>
-            <button type="button" id="btnRefresh" class="layui-btn layui-btn-normal">
-                <i class="layui-icon layui-icon-refresh"></i> 刷新列表
-            </button>
-        </div>
-
-        <!-- 上传 -->
-        <div class="layui-form-item">
-            <label class="layui-form-label">上传文件</label>
-            <div class="layui-input-inline" style="width: 300px;">
-                <input type="file" id="multipartFile" name="multipartFile" class="layui-input">
-            </div>
-            <button type="button" id="btnUpload" class="layui-btn">
-                <i class="layui-icon layui-icon-upload"></i> 上传
-            </button>
-        </div>
-
-        <!-- 文件列表 -->
-        <table class="layui-table">
+    <div id="fileStatus" class="status">准备读取目录</div>
+    <div class="table-wrap">
+        <table class="layui-table" lay-size="sm">
             <thead>
             <tr>
-                <th>文件名</th>
-                <th>大小</th>
-                <th>修改时间</th>
-                <th>类型</th>
-                <th>操作</th>
+                <th>名称</th>
+                <th style="width: 120px;">大小</th>
+                <th style="width: 170px;">修改时间</th>
+                <th style="width: 150px;">操作</th>
             </tr>
             </thead>
             <tbody id="fileList">
-            </tr>
+            <tr><td colspan="4" style="text-align:center;color:#8792a2;">正在读取目录...</td></tr>
             </tbody>
         </table>
-
     </div>
 </div>
 
 <script th:inline="javascript" type="text/javascript">
-    // 取得连接参数
     const host = [[${host}]];
     const port = [[${port}]];
     const username = [[${username}]];
     const password = [[${password}]];
+    let layerRef = null;
 
-    // 格式化字节
-    function formatSize(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    // 统一目录格式，保证独立文件管理页和终端内文件面板行为一致。
+    function normalizePath(path) {
+        path = (path || '/tmp/').trim();
+        if (!path) path = '/tmp/';
+        return path.endsWith('/') ? path : path + '/';
     }
-
-    // 格式化时间戳
+    function parentPath(path) {
+        path = normalizePath(path);
+        if (path === '/') return '/';
+        const trimmed = path.substring(0, path.length - 1);
+        const index = trimmed.lastIndexOf('/');
+        return index <= 0 ? '/' : trimmed.substring(0, index + 1);
+    }
+    // 所有文件接口都复用当前 SSH 连接参数和目录输入框。
+    function commonParams() {
+        return {host: host, port: port, username: username, password: password, remotePath: normalizePath($('#remotePath').val())};
+    }
+    function setStatus(text, isError) {
+        $('#fileStatus').text(text).toggleClass('error', !!isError);
+    }
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+            return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]);
+        });
+    }
+    function jsString(value) {
+        return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+    function formatSize(bytes) {
+        bytes = Number(bytes || 0);
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+    }
     function formatTime(ts) {
         if (!ts) return '-';
         const d = new Date(ts);
-        return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes();
+        const pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
-
-    // 构造公共请求参数
-    function commonParams() {
-        return {
-            host: host,
-            port: port,
-            username: username,
-            password: password,
-            remotePath: $('#remotePath').val()
-        };
-    }
-
-    // 刷新文件列表
+    // 刷新远程目录列表，展示文件状态、大小、修改时间和可用操作。
     function refreshList() {
+        const path = normalizePath($('#remotePath').val());
+        $('#remotePath').val(path);
+        setStatus('正在读取：' + path, false);
         $.get('/file/list', commonParams(), function (data) {
             const tbody = $('#fileList');
             tbody.empty();
             if (!Array.isArray(data) || data.length === 0) {
-                tbody.append('<tr><td colspan="5" style="text-align:center;">暂无文件</td></tr>');
-                return;
+                tbody.append('<tr><td colspan="4" style="text-align:center;color:#8792a2;">当前目录为空</td></tr>');
+            } else {
+                data.forEach(function (item) {
+                    const name = escapeHtml(item.filename);
+                    const rawName = jsString(item.filename);
+                    const downloadUrl = '/file/download?' + $.param(Object.assign({}, commonParams(), {filename: item.filename}));
+                    const nameCell = item.directory
+                        ? '<a onclick="enterDirectory(\'' + rawName + '\')">' + name + '</a>'
+                        : name;
+                    tbody.append('<tr>' +
+                        '<td class="file-name">' + nameCell + '</td>' +
+                        '<td>' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
+                        '<td>' + formatTime(item.modifyTime) + '</td>' +
+                        '<td class="op-btns">' +
+                        (item.directory ? '' : '<a class="layui-btn layui-btn-xs" href="' + downloadUrl + '">下载</a>') +
+                        '<button type="button" class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteFile(\'' + rawName + '\')">删除</button>' +
+                        '</td>' +
+                        '</tr>');
+                });
             }
-            data.forEach(function (item) {
-                const downloadUrl = '/file/download?' + $.param(Object.assign({}, commonParams(), {filename: item.filename}));
-                const tr = '<tr>' +
-                    '<td>' + item.filename + '</td>' +
-                    '<td>' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
-                    '<td>' + formatTime(item.modifyTime) + '</td>' +
-                    '<td>' + (item.directory ? '目录' : '文件') + '</td>' +
-                    '<td class="op-btns">' +
-                    (item.directory ? '' : '<a href="' + downloadUrl + '" class="layui-btn layui-btn-xs">下载</a>') +
-                    '<a href="javascript:;" class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteFile(\'' + item.filename + '\')">删除</a>' +
-                    '</td>' +
-                    '</tr>';
-                tbody.append(tr);
-            });
+            setStatus('目录：' + path + '，共 ' + data.length + ' 项', false);
         }).fail(function (xhr) {
-            layer.msg('获取文件列表失败：' + (xhr.responseText || xhr.statusText), {icon: 2});
+            setStatus('读取失败：' + (xhr.responseText || xhr.statusText), true);
         });
     }
-
-    // 删除文件
+    function enterDirectory(filename) {
+        $('#remotePath').val(normalizePath($('#remotePath').val()) + filename + '/');
+        refreshList();
+    }
+    // 删除当前目录下的文件或空目录。
     function deleteFile(filename) {
-        layer.confirm('确定删除 ' + filename + ' 吗？', function (index) {
-            layer.close(index);
+        layerRef.confirm('确定删除 "' + filename + '" 吗？', function (index) {
+            layerRef.close(index);
             $.post('/file/delete', Object.assign({}, commonParams(), {filename: filename}), function (res) {
-                layer.msg(res.msg || '删除成功', {icon: 1});
+                setStatus(res.msg || '删除成功', false);
                 refreshList();
             }).fail(function (xhr) {
-                layer.msg('删除失败：' + (xhr.responseText || xhr.statusText), {icon: 2});
+                setStatus('删除失败：' + (xhr.responseText || xhr.statusText), true);
             });
         });
     }
-
-    // 上传
+    // 上传文件到当前目录，完成后刷新列表并显示最终远程路径。
     function uploadFile() {
         const fileInput = document.getElementById('multipartFile');
         if (!fileInput.files || fileInput.files.length === 0) {
-            layer.msg('请选择文件', {icon: 0});
+            setStatus('请先选择一个文件', true);
             return;
         }
         const formData = new FormData();
@@ -152,8 +173,8 @@
         formData.append('port', port);
         formData.append('username', username);
         formData.append('password', password);
-        formData.append('remotePath', $('#remotePath').val());
-
+        formData.append('remotePath', normalizePath($('#remotePath').val()));
+        setStatus('正在上传：' + fileInput.files[0].name, false);
         $.ajax({
             url: '/upload',
             type: 'POST',
@@ -161,26 +182,38 @@
             processData: false,
             contentType: false,
             success: function (res) {
-                layer.msg(res.msg || '上传成功', {icon: 1});
                 fileInput.value = '';
+                setStatus((res.msg || '上传成功') + '：' + res.remotePath + res.filename, false);
                 refreshList();
             },
             error: function (xhr) {
-                layer.msg('上传失败：' + (xhr.responseText || xhr.statusText), {icon: 2});
+                setStatus('上传失败：' + (xhr.responseText || xhr.statusText), true);
             }
         });
     }
-
+    // 新建子目录后刷新当前目录。
+    function createDirectory() {
+        layerRef.prompt({title: '新建远程目录', formType: 0}, function (value, index) {
+            const dirname = (value || '').trim();
+            if (!dirname) return;
+            layerRef.close(index);
+            $.post('/file/mkdir', Object.assign({}, commonParams(), {dirname: dirname}), function (res) {
+                setStatus(res.msg || '目录创建成功', false);
+                refreshList();
+            }).fail(function (xhr) {
+                setStatus('创建目录失败：' + (xhr.responseText || xhr.statusText), true);
+            });
+        });
+    }
     layui.use(['layer'], function () {
-        window.layer = layui.layer;
-
+        layerRef = layui.layer;
         $('#btnRefresh').on('click', refreshList);
+        $('#btnParent').on('click', function () { $('#remotePath').val(parentPath($('#remotePath').val())); refreshList(); });
+        $('#btnMkdir').on('click', createDirectory);
         $('#btnUpload').on('click', uploadFile);
-
-        // 进入页面自动刷新
+        $('#remotePath').on('keydown', function (event) { if (event.keyCode === 13) refreshList(); });
         refreshList();
     });
 </script>
-
 </body>
 </html>

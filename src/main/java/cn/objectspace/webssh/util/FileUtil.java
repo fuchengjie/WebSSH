@@ -7,7 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URLEncoder;
-import java.nio.file.Files;
 import java.util.*;
 
 /*
@@ -34,6 +33,27 @@ public class FileUtil {
             path = path + "/";
         }
         return path;
+    }
+
+    /**
+     * 拼接远程路径时只接受单个文件名，避免前端传入 ../ 或斜杠导致越过当前目录操作。
+     */
+    private static String joinRemotePath(String remotePath, String filename) {
+        return normalizePath(remotePath) + safeName(filename);
+    }
+
+    /**
+     * SFTP 删除、下载、创建目录都只允许处理当前目录下的直接子项。
+     */
+    private static String safeName(String filename) {
+        if (filename == null || filename.trim().isEmpty()) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+        filename = filename.trim();
+        if (".".equals(filename) || "..".equals(filename) || filename.contains("/") || filename.contains("\\")) {
+            throw new IllegalArgumentException("非法文件名: " + filename);
+        }
+        return filename;
     }
 
     /**
@@ -83,7 +103,7 @@ public class FileUtil {
 
             String filename = getOriginalFilename(multipartFile);
             try (InputStream inputStream = multipartFile.getInputStream()) {
-                sftpChannel.put(inputStream, targetDir + filename);
+                sftpChannel.put(inputStream, joinRemotePath(targetDir, filename));
             }
         } finally {
             closeSftpChannel(sftpChannel);
@@ -98,7 +118,6 @@ public class FileUtil {
         ChannelSftp sftpChannel = openSftpChannel(hostData);
         try {
             String targetDir = normalizePath(remotePath);
-            ensureDirectory(sftpChannel, targetDir);
 
             Vector<ChannelSftp.LsEntry> entries = sftpChannel.ls(targetDir);
             List<Map<String, Object>> result = new ArrayList<>();
@@ -115,7 +134,33 @@ public class FileUtil {
                 item.put("directory", attrs.isDir());
                 result.add(item);
             }
+            // 目录排在文件前面，同类按名称排序，方便在前端浏览远程文件。
+            result.sort(new Comparator<Map<String, Object>>() {
+                @Override
+                public int compare(Map<String, Object> first, Map<String, Object> second) {
+                    boolean firstDir = Boolean.TRUE.equals(first.get("directory"));
+                    boolean secondDir = Boolean.TRUE.equals(second.get("directory"));
+                    if (firstDir != secondDir) {
+                        return firstDir ? -1 : 1;
+                    }
+                    return String.valueOf(first.get("filename")).compareToIgnoreCase(String.valueOf(second.get("filename")));
+                }
+            });
             return result;
+        } finally {
+            closeSftpChannel(sftpChannel);
+        }
+    }
+
+    /**
+     * 在远程目录下创建子目录
+     */
+    public static void mkdir(HostData hostData, String remotePath, String dirname) throws JSchException, SftpException {
+        ChannelSftp sftpChannel = openSftpChannel(hostData);
+        try {
+            String targetDir = normalizePath(remotePath);
+            ensureDirectory(sftpChannel, targetDir);
+            sftpChannel.mkdir(joinRemotePath(targetDir, dirname));
         } finally {
             closeSftpChannel(sftpChannel);
         }
@@ -128,7 +173,7 @@ public class FileUtil {
         ChannelSftp sftpChannel = openSftpChannel(hostData);
         try {
             String targetDir = normalizePath(remotePath);
-            String fullPath = targetDir + filename;
+            String fullPath = joinRemotePath(targetDir, filename);
             SftpATTRS attrs = sftpChannel.stat(fullPath);
             if (attrs.isDir()) {
                 sftpChannel.rmdir(fullPath);
@@ -148,10 +193,11 @@ public class FileUtil {
         InputStream in = null;
         try {
             String targetDir = normalizePath(remotePath);
-            String fullPath = targetDir + filename;
+            String safeFilename = safeName(filename);
+            String fullPath = joinRemotePath(targetDir, safeFilename);
 
             response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + URLEncoder.encode(filename, "UTF-8"));
+            response.setHeader("Content-Disposition", "attachment; filename*=UTF-8''" + URLEncoder.encode(safeFilename, "UTF-8"));
 
             in = sftpChannel.get(fullPath);
             OutputStream out = response.getOutputStream();

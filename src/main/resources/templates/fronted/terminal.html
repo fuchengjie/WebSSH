@@ -1,151 +1,365 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
-
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>JSSH</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSSH</title>
 
     <link rel="shortcut icon" href="/static/assets/img/favicon.ico">
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/plugins/xterm/xterm.css"/>
 
     <script src="/static/plugins/jquery/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="/static/plugins/layui/layui.js" charset="utf-8"></script>
     <script src="/static/assets/js/jssh.js" charset="utf-8"></script>
-
-    <link rel="stylesheet" href="/static/plugins/xterm/xterm.css"/>
     <script src="/static/plugins/xterm/xterm.js" charset="utf-8"></script>
-    <!-- 自适应终端尺寸插件，提供全局 FitAddon -->
     <script src="/static/plugins/xterm/xterm-addon-fit.js" charset="utf-8"></script>
-    <script src="/static/plugins/layui/layui.js"></script>
 
-    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css">
-
+    <style>
+        * { box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; overflow: hidden; background: #f4f6f8; }
+        .app-shell { height: 100vh; min-height: 0; display: flex; flex-direction: column; }
+        .topbar {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            background: #20252f;
+            color: #fff;
+            border-bottom: 1px solid #111722;
+        }
+        .brand { font-size: 18px; font-weight: 600; }
+        .host-meta { color: #c8d0dc; font-size: 13px; }
+        .workspace { min-height: 0; flex: 1; display: grid; grid-template-columns: 380px minmax(0, 1fr); }
+        .file-panel {
+            min-height: 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #d8dee8;
+            background: #fff;
+        }
+        .panel-header { padding: 14px 16px 10px; border-bottom: 1px solid #edf0f5; }
+        .panel-title { margin: 0 0 10px; font-size: 16px; font-weight: 600; color: #1f2937; }
+        .path-row { display: flex; gap: 8px; }
+        .path-row .layui-input { height: 34px; }
+        .file-actions {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #edf0f5;
+            align-items: center;
+        }
+        .file-actions input[type="file"] { min-width: 0; }
+        .status-line {
+            min-height: 28px;
+            padding: 6px 16px;
+            color: #596579;
+            font-size: 12px;
+            border-bottom: 1px solid #edf0f5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-list-wrap {
+            min-height: 0;
+            flex: 1 1 auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+        }
+        .file-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .file-table th, .file-table td { padding: 9px 10px; border-bottom: 1px solid #edf0f5; vertical-align: middle; }
+        .file-table th { position: sticky; top: 0; background: #f8fafc; color: #667085; font-weight: 600; z-index: 1; }
+        .file-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-name a { color: #1f6feb; cursor: pointer; }
+        .muted { color: #8792a2; }
+        .empty-row { padding: 28px 16px; color: #8792a2; text-align: center; }
+        .icon-btn {
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            color: #3b4556;
+            padding: 3px 4px;
+            line-height: 1;
+        }
+        .icon-btn:hover { color: #1f6feb; }
+        .danger:hover { color: #c0392b; }
+        .terminal-panel { min-height: 0; min-width: 0; display: flex; flex-direction: column; background: #fff; }
+        .terminal-title {
+            height: 42px;
+            display: flex;
+            align-items: center;
+            padding: 0 22px;
+            border-bottom: 1px solid #edf0f5;
+            color: #263446;
+        }
+        .terminal-wrap { min-height: 0; flex: 1; padding: 12px 22px 18px; }
+        #container { width: 100%; height: 100%; background: #000; }
+        @media (max-width: 980px) {
+            html, body { overflow: auto; }
+            .workspace { grid-template-columns: 1fr; grid-template-rows: minmax(360px, 48vh) minmax(420px, 52vh); }
+            .file-panel { border-right: 0; border-bottom: 1px solid #d8dee8; }
+        }
+    </style>
 </head>
-<body class="layui-layout-body" th:inline="text">
-
-<div class="layui-layout layui-layout-admin">
-    <div class="layui-header">
-        <div class="layui-logo layui-hide-xs layui-bg-black">webssh</div>
-        <!-- 头部区域（可配合layui 已有的水平导航） -->
-        <ul class="layui-nav layui-layout-left">
-            <!-- 移动端显示 -->
-            <li class="layui-nav-item layui-show-xs-inline-block layui-hide-sm" lay-header-event="menuLeft">
-                <i class="layui-icon layui-icon-spread-left"></i>
-            </li>
-
-            <!--			<li class="layui-nav-item layui-hide-xs"><a href="">nav 1</a></li>-->
-            <!--			<li class="layui-nav-item layui-hide-xs"><a href="">nav 2</a></li>-->
-            <!--			<li class="layui-nav-item layui-hide-xs"><a href="">nav 3</a></li>-->
-            <li class="layui-nav-item">
-                <!--				<a href="javascript:;">nav groups</a>-->
-                <dl class="layui-nav-child">
-                    <!--					<dd><a href="">menu 11</a></dd>-->
-                    <!--					<dd><a href="">menu 22</a></dd>-->
-                    <!--					<dd><a href="">menu 33</a></dd>-->
-                </dl>
-            </li>
-        </ul>
-        <ul class="layui-nav layui-layout-right">
-            <li class="layui-nav-item layui-hide layui-show-md-inline-block">
-                <a href="javascript:;">
-                    <!--					<img src="//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg" class="layui-nav-img">-->
-                    <!--					tester-->
-                </a>
-                <dl class="layui-nav-child">
-                    <!--					<dd><a href="">Your Profile</a></dd>-->
-                    <!--					<dd><a href="">Settings</a></dd>-->
-                    <!--					<dd><a href="">Sign out</a></dd>-->
-                </dl>
-            </li>
-            <li class="layui-nav-item" lay-header-event="menuRight" lay-unselect>
-                <a href="javascript:;">
-                    <!--					<i class="layui-icon layui-icon-more-vertical"></i>-->
-                </a>
-            </li>
-        </ul>
+<body>
+<div class="app-shell">
+    <div class="topbar">
+        <div class="brand">webssh</div>
+        <div class="host-meta">[[${data.username}]]@[[${data.host}]]:[[${data.port}]]</div>
     </div>
 
-    <div class="layui-side layui-bg-black">
-        <div class="layui-side-scroll">
-            <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
-            <ul class="layui-nav layui-nav-tree" lay-filter="test">
-                <li class="layui-nav-item layui-nav-itemed">
-                    <a class="" href="javascript:;">menu group 1</a>
-                    <dl class="layui-nav-child">
-                        <dd>
-<!--                            <a class="open-popup" th:attr="data-url=@{/upload}"-->
-<!--                               th:text="上传文件"></a>-->
-                            <a>上传文件</a>
-                            <form action="/upload" method="post" enctype="multipart/form-data" target="frameName">
-                                <input type="file" name="multipartFile" id="multipartFile"/><br/>
-                                <input type="submit" name="" id="" value="上传文件" />
-                                <input type="hidden" name="host" th:value="${data.getHost()}">
-                                <input type="hidden" name="port" th:value="${data.getPort()}">
-                                <input type="hidden" name="username" th:value="${data.getUsername()}">
-                                <input type="hidden" name="password" th:value="${data.getPassword()}">
-                            </form>
-                            <iframe src="" frameborder="0" name="frameName"></iframe>
-                        </dd>
-                        <!--						<dd><a href="javascript:;">menu 2</a></dd>-->
-                        <!--						<dd><a href="javascript:;">menu 3</a></dd>-->
-                        <!--						<dd><a href="">the links</a></dd>-->
-                    </dl>
-                </li>
-                <li class="layui-nav-item">
-                    <!--					<a href="javascript:;">menu group 2</a>-->
-                    <!--					<dl class="layui-nav-child">-->
-                    <!--						<dd><a href="javascript:;">list 1</a></dd>-->
-                    <!--						<dd><a href="javascript:;">list 2</a></dd>-->
-                    <!--						<dd><a href="">超链接</a></dd>-->
-                    <!--					</dl>-->
-                </li>
-                <!--				<li class="layui-nav-item"><a href="javascript:;">click menu item</a></li>-->
-                <!--				<li class="layui-nav-item"><a href="">the links</a></li>-->
-            </ul>
-        </div>
-    </div>
-
-    <div class="layui-body">
-        <!-- 内容主体区域 -->
-        <div style="padding: 15px;">
-            <span>连接主机为 [[${data.host}]] </span>
-        </div>
-        <div class="layui-row" style="margin-bottom: 10%">
-            <div class="layui-fluid">
-                <div class="layui-row"  id="container"></div>
-                <!--       终端显示         -->
+    <div class="workspace">
+        <aside class="file-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">远程文件</h2>
+                <div class="path-row">
+                    <input type="text" id="remotePath" class="layui-input" value="/tmp/" autocomplete="off">
+                    <button type="button" id="btnParent" class="layui-btn layui-btn-primary layui-btn-sm" title="上级目录">
+                        <i class="layui-icon layui-icon-up"></i>
+                    </button>
+                    <button type="button" id="btnRefresh" class="layui-btn layui-btn-normal layui-btn-sm" title="刷新">
+                        <i class="layui-icon layui-icon-refresh"></i>
+                    </button>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <div class="layui-footer">
-        <!-- 底部固定区域 -->
+            <div class="file-actions">
+                <input type="file" id="multipartFile">
+                <button type="button" id="btnUpload" class="layui-btn layui-btn-sm">
+                    <i class="layui-icon layui-icon-upload"></i> 上传
+                </button>
+                <button type="button" id="btnMkdir" class="layui-btn layui-btn-primary layui-btn-sm">
+                    <i class="layui-icon layui-icon-add-1"></i> 新目录
+                </button>
+            </div>
+
+            <div id="fileStatus" class="status-line">目录：/tmp/</div>
+            <div class="file-list-wrap">
+                <table class="file-table">
+                    <thead>
+                    <tr>
+                        <th>名称</th>
+                        <th style="width: 82px;">大小</th>
+                        <th style="width: 118px;">修改时间</th>
+                        <th style="width: 74px;">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody id="fileList">
+                    <tr><td colspan="4"><div class="empty-row">正在读取目录...</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </aside>
+
+        <main class="terminal-panel">
+            <div class="terminal-title">连接主机为 [[${data.host}]]</div>
+            <div class="terminal-wrap">
+                <div id="container"></div>
+            </div>
+        </main>
     </div>
 </div>
 
-</div>
-
-<!--模板引擎取得值，到这里已经实现了最基本的功能：输入用户名密码进行登录主机-->
-<script th:inline="javascript" type="module">
-    // import { Terminal } from '/static/plugins/xterm/xterm.js';
-    // <!--/* thymeleaf预处理获取连接的信息 */-->
+<script th:inline="javascript" type="text/javascript">
     const host = [[${data.host}]];
     const port = [[${data.port}]];
     const username = [[${data.username}]];
     const password = [[${data.password}]];
 
-    // <!--/* 默认会打开终端窗口 */-->
-    const terminal = openTerminal("connect", host, port, username, password, "container");
+    openTerminal("connect", host, port, username, password, "container");
 
-    // window.onresize = function() {
-    //
-    //     // this.terminal.fit();
-    //     // this.terminal.scrollToBottom();
-    //
-    // };
+    let layerRef = null;
 
-    // <!--/* 定义上传函数 */-->
-    function upload() {
-
+    // 统一目录格式，保证前端展示和后端接口都使用以 / 结尾的目录路径。
+    function normalizePath(path) {
+        path = (path || '/tmp/').trim();
+        if (!path) path = '/tmp/';
+        return path.endsWith('/') ? path : path + '/';
     }
+
+    function joinPath(base, name) {
+        return normalizePath(base) + name + '/';
+    }
+
+    function parentPath(path) {
+        path = normalizePath(path);
+        if (path === '/') return '/';
+        const trimmed = path.substring(0, path.length - 1);
+        const index = trimmed.lastIndexOf('/');
+        if (index <= 0) return '/';
+        return trimmed.substring(0, index + 1);
+    }
+
+    // 所有文件接口都复用当前 SSH 连接参数和当前远程目录。
+    function commonParams() {
+        return {
+            host: host,
+            port: port,
+            username: username,
+            password: password,
+            remotePath: normalizePath($('#remotePath').val())
+        };
+    }
+
+    function setStatus(text, isError) {
+        $('#fileStatus').text(text).css('color', isError ? '#c0392b' : '#596579');
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (char) {
+            return ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]);
+        });
+    }
+
+    function jsString(value) {
+        return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function formatSize(bytes) {
+        bytes = Number(bytes || 0);
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+        return (bytes / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+    }
+
+    function formatTime(ts) {
+        if (!ts) return '-';
+        const d = new Date(ts);
+        const pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+
+    // 渲染远程目录列表：目录可点击进入，文件可下载或删除。
+    function renderFiles(data) {
+        const tbody = $('#fileList');
+        tbody.empty();
+        if (!Array.isArray(data) || data.length === 0) {
+            tbody.append('<tr><td colspan="4"><div class="empty-row">当前目录为空</div></td></tr>');
+            return;
+        }
+        data.forEach(function (item) {
+            const name = escapeHtml(item.filename);
+            const rawName = jsString(item.filename);
+            const downloadUrl = '/file/download?' + $.param(Object.assign({}, commonParams(), {filename: item.filename}));
+            const nameCell = item.directory
+                ? '<a onclick="enterDirectory(\'' + rawName + '\')" title="' + name + '"><i class="layui-icon layui-icon-template-1"></i> ' + name + '</a>'
+                : '<span title="' + name + '"><i class="layui-icon layui-icon-file"></i> ' + name + '</span>';
+            const downloadBtn = item.directory ? '' :
+                '<a class="icon-btn" href="' + downloadUrl + '" title="下载"><i class="layui-icon layui-icon-download-circle"></i></a>';
+            const row = '<tr>' +
+                '<td class="file-name">' + nameCell + '</td>' +
+                '<td class="muted">' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
+                '<td class="muted">' + formatTime(item.modifyTime) + '</td>' +
+                '<td>' + downloadBtn +
+                '<button type="button" class="icon-btn danger" onclick="deleteFile(\'' + rawName + '\')" title="删除"><i class="layui-icon layui-icon-delete"></i></button>' +
+                '</td>' +
+                '</tr>';
+            tbody.append(row);
+        });
+    }
+
+    // 刷新当前远程目录，让用户上传后马上看到文件落在哪里。
+    function refreshList() {
+        const path = normalizePath($('#remotePath').val());
+        $('#remotePath').val(path);
+        setStatus('正在读取：' + path, false);
+        $.get('/file/list', commonParams(), function (data) {
+            renderFiles(data);
+            setStatus('目录：' + path + '，共 ' + data.length + ' 项', false);
+        }).fail(function (xhr) {
+            $('#fileList').html('<tr><td colspan="4"><div class="empty-row">读取失败</div></td></tr>');
+            setStatus('读取失败：' + (xhr.responseText || xhr.statusText), true);
+        });
+    }
+
+    function enterDirectory(filename) {
+        $('#remotePath').val(joinPath($('#remotePath').val(), filename));
+        refreshList();
+    }
+
+    // 删除当前目录下的文件或空目录，成功后重新读取目录状态。
+    function deleteFile(filename) {
+        layerRef.confirm('确定删除 "' + filename + '" 吗？', {icon: 3, title: '删除确认'}, function (index) {
+            layerRef.close(index);
+            setStatus('正在删除：' + filename, false);
+            $.post('/file/delete', Object.assign({}, commonParams(), {filename: filename}), function (res) {
+                setStatus(res.msg || '删除成功：' + filename, false);
+                refreshList();
+            }).fail(function (xhr) {
+                setStatus('删除失败：' + (xhr.responseText || xhr.statusText), true);
+            });
+        });
+    }
+
+    // 上传文件到当前远程目录，并在状态栏显示最终远程路径。
+    function uploadFile() {
+        const fileInput = document.getElementById('multipartFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            setStatus('请先选择一个本地文件', true);
+            return;
+        }
+        const path = normalizePath($('#remotePath').val());
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('multipartFile', file);
+        formData.append('host', host);
+        formData.append('port', port);
+        formData.append('username', username);
+        formData.append('password', password);
+        formData.append('remotePath', path);
+
+        setStatus('正在上传到 ' + path + '：' + file.name, false);
+        $.ajax({
+            url: '/upload',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                fileInput.value = '';
+                setStatus((res.msg || '上传成功') + '：' + path + file.name, false);
+                refreshList();
+            },
+            error: function (xhr) {
+                setStatus('上传失败：' + (xhr.responseText || xhr.statusText), true);
+            }
+        });
+    }
+
+    // 创建子目录后刷新列表，便于继续进入目录上传文件。
+    function createDirectory() {
+        layerRef.prompt({title: '新建远程目录', formType: 0}, function (value, index) {
+            const dirname = (value || '').trim();
+            if (!dirname) return;
+            layerRef.close(index);
+            $.post('/file/mkdir', Object.assign({}, commonParams(), {dirname: dirname}), function (res) {
+                setStatus(res.msg || '目录创建成功：' + dirname, false);
+                refreshList();
+            }).fail(function (xhr) {
+                setStatus('创建目录失败：' + (xhr.responseText || xhr.statusText), true);
+            });
+        });
+    }
+
+    layui.use(['layer'], function () {
+        layerRef = layui.layer;
+        $('#btnRefresh').on('click', refreshList);
+        $('#btnParent').on('click', function () {
+            $('#remotePath').val(parentPath($('#remotePath').val()));
+            refreshList();
+        });
+        $('#btnUpload').on('click', uploadFile);
+        $('#btnMkdir').on('click', createDirectory);
+        $('#remotePath').on('keydown', function (event) {
+            if (event.keyCode === 13) refreshList();
+        });
+        refreshList();
+    });
 </script>
 </body>
 </html>
