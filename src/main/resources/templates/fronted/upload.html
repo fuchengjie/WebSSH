@@ -1,55 +1,186 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:mo="https://gitee.com/aun/Timo" lang="zh-CN">
-<head th:replace="/common/template :: header(~{::title},~{::link},~{::style})">
-<!--  <link rel="stylesheet" th:href="@{/lib/zTree_v3/css/zTreeStyle/zTreeStyle.css}" type="text/css">-->
+<html xmlns:th="http://www.thymeleaf.org" lang="zh-CN">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>文件管理</title>
+    <link rel="shortcut icon" href="/static/assets/img/favicon.ico">
+    <script src="/static/plugins/jquery/jquery-3.4.1.min.js" charset="utf-8"></script>
+    <script src="/static/plugins/layui/layui.js"></script>
+    <link rel="stylesheet" href="/static/plugins/layui/css/layui.css">
+    <style>
+        body { padding: 15px; }
+        .op-btns a { margin-right: 6px; }
+    </style>
 </head>
 <body>
-<div class="layui-form">
-  <!--    提交已经完成的步骤-->
-  <form th:action="@{/upload}" method="post">
-    <input type="hidden" name="id" th:if="${id}" th:value="${id}"/>
-    <div class="layui-form-item">
-      <label class="layui-form-label required">完成人</label>
-      <div class="layui-input-inline">
-      </div>
-    </div>
 
-    <div class="layui-form-item timo-finally">
-      <button class="layui-btn ajax-submit"><i class="fa fa-check-circle"></i> 提交</button>
-      <button class="layui-btn btn-secondary close-popup"><i class="fa fa-times-circle"></i> 关闭</button>
-    </div>
-  </form>
+<div class="layui-card">
+    <div class="layui-card-header">远程文件管理</div>
+    <div class="layui-card-body">
 
-  <form action="/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="multipartFile" id="multipartFile"/><br/>
-    <div class="layui-form-item">
-      <label class="layui-form-label required">完成人</label>
-      <div class="layui-input-inline">
-        <input type="submit" name="" id="" value="提交" />
-      </div>
-    </div>
+        <!-- 连接信息（隐藏，用于 JS 构造请求） -->
+        <input type="hidden" id="host" th:value="${host}">
+        <input type="hidden" id="port" th:value="${port}">
+        <input type="hidden" id="username" th:value="${username}">
+        <input type="hidden" id="password" th:value="${password}">
 
-    <input type="hidden" name="host" th:value="${data.getHost()}">
-    <input type="hidden" name="port" th:value="${data.getPort()}">
-    <input type="hidden" name="username" th:value="${data.getUsername()}">
-    <input type="hidden" name="password" th:value="${data.getPassword()}">
-  </form>
+        <!-- 目录选择 -->
+        <div class="layui-form-item">
+            <label class="layui-form-label">远程目录</label>
+            <div class="layui-input-inline" style="width: 300px;">
+                <input type="text" id="remotePath" th:value="${remotePath}" placeholder="例如 /tmp/" autocomplete="off"
+                       class="layui-input">
+            </div>
+            <button type="button" id="btnRefresh" class="layui-btn layui-btn-normal">
+                <i class="layui-icon layui-icon-refresh"></i> 刷新列表
+            </button>
+        </div>
+
+        <!-- 上传 -->
+        <div class="layui-form-item">
+            <label class="layui-form-label">上传文件</label>
+            <div class="layui-input-inline" style="width: 300px;">
+                <input type="file" id="multipartFile" name="multipartFile" class="layui-input">
+            </div>
+            <button type="button" id="btnUpload" class="layui-btn">
+                <i class="layui-icon layui-icon-upload"></i> 上传
+            </button>
+        </div>
+
+        <!-- 文件列表 -->
+        <table class="layui-table">
+            <thead>
+            <tr>
+                <th>文件名</th>
+                <th>大小</th>
+                <th>修改时间</th>
+                <th>类型</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody id="fileList">
+            </tr>
+            </tbody>
+        </table>
+
+    </div>
 </div>
-<script th:replace="/common/template :: script"></script>
-<script type="text/javascript" th:src="@{/js/plugins/jquery-2.2.4.min.js}"></script>
-<script type="text/javascript" th:src="@{/lib/zTree_v3/js/jquery.ztree.core.min.js}"></script>
-<script type="text/javascript" th:src="@{/js/timoTree.js}"></script>
-<script>
-  // 渲染添加页面的任务和步骤选择框
 
+<script th:inline="javascript" type="text/javascript">
+    // 取得连接参数
+    const host = [[${host}]];
+    const port = [[${port}]];
+    const username = [[${username}]];
+    const password = [[${password}]];
 
+    // 格式化字节
+    function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    // 格式化时间戳
+    function formatTime(ts) {
+        if (!ts) return '-';
+        const d = new Date(ts);
+        return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes();
+    }
+
+    // 构造公共请求参数
+    function commonParams() {
+        return {
+            host: host,
+            port: port,
+            username: username,
+            password: password,
+            remotePath: $('#remotePath').val()
+        };
+    }
+
+    // 刷新文件列表
+    function refreshList() {
+        $.get('/file/list', commonParams(), function (data) {
+            const tbody = $('#fileList');
+            tbody.empty();
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.append('<tr><td colspan="5" style="text-align:center;">暂无文件</td></tr>');
+                return;
+            }
+            data.forEach(function (item) {
+                const downloadUrl = '/file/download?' + $.param(Object.assign({}, commonParams(), {filename: item.filename}));
+                const tr = '<tr>' +
+                    '<td>' + item.filename + '</td>' +
+                    '<td>' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
+                    '<td>' + formatTime(item.modifyTime) + '</td>' +
+                    '<td>' + (item.directory ? '目录' : '文件') + '</td>' +
+                    '<td class="op-btns">' +
+                    (item.directory ? '' : '<a href="' + downloadUrl + '" class="layui-btn layui-btn-xs">下载</a>') +
+                    '<a href="javascript:;" class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteFile(\'' + item.filename + '\')">删除</a>' +
+                    '</td>' +
+                    '</tr>';
+                tbody.append(tr);
+            });
+        }).fail(function (xhr) {
+            layer.msg('获取文件列表失败：' + (xhr.responseText || xhr.statusText), {icon: 2});
+        });
+    }
+
+    // 删除文件
+    function deleteFile(filename) {
+        layer.confirm('确定删除 ' + filename + ' 吗？', function (index) {
+            layer.close(index);
+            $.post('/file/delete', Object.assign({}, commonParams(), {filename: filename}), function (res) {
+                layer.msg(res.msg || '删除成功', {icon: 1});
+                refreshList();
+            }).fail(function (xhr) {
+                layer.msg('删除失败：' + (xhr.responseText || xhr.statusText), {icon: 2});
+            });
+        });
+    }
+
+    // 上传
+    function uploadFile() {
+        const fileInput = document.getElementById('multipartFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            layer.msg('请选择文件', {icon: 0});
+            return;
+        }
+        const formData = new FormData();
+        formData.append('multipartFile', fileInput.files[0]);
+        formData.append('host', host);
+        formData.append('port', port);
+        formData.append('username', username);
+        formData.append('password', password);
+        formData.append('remotePath', $('#remotePath').val());
+
+        $.ajax({
+            url: '/upload',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+                layer.msg(res.msg || '上传成功', {icon: 1});
+                fileInput.value = '';
+                refreshList();
+            },
+            error: function (xhr) {
+                layer.msg('上传失败：' + (xhr.responseText || xhr.statusText), {icon: 2});
+            }
+        });
+    }
+
+    layui.use(['layer'], function () {
+        window.layer = layui.layer;
+
+        $('#btnRefresh').on('click', refreshList);
+        $('#btnUpload').on('click', uploadFile);
+
+        // 进入页面自动刷新
+        refreshList();
+    });
 </script>
 
-<script type="text/javascript">
-  // 树形菜单
-  $.fn.selectTree();
-
-</script>
 </body>
 </html>
