@@ -12,6 +12,8 @@
 
     <link rel="stylesheet" href="/static/plugins/xterm/xterm.css"/>
     <script src="/static/plugins/xterm/xterm.js" charset="utf-8"></script>
+    <!-- 自适应终端尺寸插件，提供全局 FitAddon -->
+    <script src="/static/plugins/xterm/xterm-addon-fit.js" charset="utf-8"></script>
     <script src="/static/plugins/layui/layui.js"></script>
 
     <link rel="stylesheet" href="/static/plugins/layui/css/layui.css">
@@ -139,7 +141,6 @@
     //     // this.terminal.scrollToBottom();
     //
     // };
-    const fitAddon = new FitAddon();
 
     // <!--/* 定义上传函数 */-->
     function upload() {

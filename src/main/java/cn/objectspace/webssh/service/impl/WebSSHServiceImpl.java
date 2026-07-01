@@ -6,6 +6,7 @@ import cn.objectspace.webssh.pojo.HostData;
 import cn.objectspace.webssh.service.WebSSHService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelShell;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
@@ -102,6 +103,18 @@ public class WebSSHServiceImpl implements WebSSHService {
                     logger.error("webssh连接异常");
                     logger.error("异常信息:{}", e.getMessage());
                     close(session);
+                }
+            }
+        } else if (ConstantPool.WEBSSH_OPERATE_RESIZE.equals(webSSHData.getOperate())) {
+            // 终端尺寸变化，同步给远程伪终端
+            SSHConnectInfo sshConnectInfo = (SSHConnectInfo) sshMap.get(userId);
+            if (sshConnectInfo != null && sshConnectInfo.getChannel() instanceof ChannelShell) {
+                ChannelShell channelShell = (ChannelShell) sshConnectInfo.getChannel();
+                Integer cols = webSSHData.getCols();
+                Integer rows = webSSHData.getRows();
+                if (cols != null && rows != null && cols > 0 && rows > 0) {
+                    // 像素宽高按字符 8x16 估算
+                    channelShell.setPtySize(cols, rows, cols * 8, rows * 16);
                 }
             }
         } else {
@@ -215,6 +228,13 @@ public class WebSSHServiceImpl implements WebSSHService {
 
         //通道连接 超时时间3s
         channel.connect(3000);
+
+        // 设置初始终端尺寸（若前端已上报）
+        Integer cols = webSSHData.getCols();
+        Integer rows = webSSHData.getRows();
+        if (channel instanceof ChannelShell && cols != null && rows != null && cols > 0 && rows > 0) {
+            ((ChannelShell) channel).setPtySize(cols, rows, cols * 8, rows * 16);
+        }
 
         // 获取连接状态
         boolean res = channel.isConnected();

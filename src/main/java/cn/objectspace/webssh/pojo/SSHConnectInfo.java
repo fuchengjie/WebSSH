@@ -12,6 +12,8 @@ public class SSHConnectInfo {
     private WebSocketSession webSocketSession;
     private JSch jSch;
     private Channel channel;
+    //私钥路径（公钥登录用，当前未启用）
+    private String privateKey;
 
 
     public WebSocketSession getWebSocketSession() {
@@ -36,5 +38,13 @@ public class SSHConnectInfo {
 
     public void setChannel(Channel channel) {
         this.channel = channel;
+    }
+
+    public String getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
     }
 }

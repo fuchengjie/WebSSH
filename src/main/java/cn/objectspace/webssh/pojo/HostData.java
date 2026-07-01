@@ -14,6 +14,10 @@ public class HostData {
     private String username;
     private String password;
     private String command = "";
+    //终端列数（自适应时由前端上报）
+    private Integer cols;
+    //终端行数（自适应时由前端上报）
+    private Integer rows;
 
     public String getOperate() {
         return operate;
@@ -61,5 +65,21 @@ public class HostData {
 
     public void setCommand(String command) {
         this.command = command;
+    }
+
+    public Integer getCols() {
+        return cols;
+    }
+
+    public void setCols(Integer cols) {
+        this.cols = cols;
+    }
+
+    public Integer getRows() {
+        return rows;
+    }
+
+    public void setRows(Integer rows) {
+        this.rows = rows;
     }
 }

@@ -24,4 +24,8 @@ public class ConstantPool {
      * 发送指令：命令
      */
     public static final String WEBSSH_OPERATE_COMMAND = "command";
+    /**
+     * 发送指令：终端尺寸变化
+     */
+    public static final String WEBSSH_OPERATE_RESIZE = "resize";
 }
