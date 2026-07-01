@@ -18,6 +18,8 @@ public class HostData {
     private Integer cols;
     //终端行数（自适应时由前端上报）
     private Integer rows;
+    //私钥内容（公钥登录用，仅本次会话有效，不持久化）
+    private String privateKey;
 
     public String getOperate() {
         return operate;
@@ -81,5 +83,13 @@ public class HostData {
 
     public void setRows(Integer rows) {
         this.rows = rows;
+    }
+
+    public String getPrivateKey() {
+        return privateKey;
+    }
+
+    public void setPrivateKey(String privateKey) {
+        this.privateKey = privateKey;
     }
 }

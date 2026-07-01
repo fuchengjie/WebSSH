@@ -63,11 +63,17 @@ resize  auto</pre>
                        placeholder="root / ubuntu">
             </div>
 
-            <label class="field-label" for="password">密码</label>
+<label class="field-label" for="password">密码（密码登录时必填；私钥登录时可作为私钥口令）</label>
             <div class="input-wrap">
                 <i class="layui-icon layui-icon-password"></i>
-                <input class="layui-input" required="required" type="password" name="password" id="password"
-                       placeholder="SSH 登录密码">
+                <input class="layui-input" type="password" name="password" id="password"
+                       placeholder="SSH 登录密码 / 私钥口令">
+            </div>
+
+            <label class="field-label" for="privateKey">私钥内容（可选）</label>
+            <div class="input-wrap">
+                <textarea class="layui-textarea" name="privateKey" id="privateKey" rows="4"
+                          placeholder="如需私钥登录，请粘贴 PEM 格式私钥内容。OpenSSH 新格式（-----BEGIN OPENSSH PRIVATE KEY-----）需先用 ssh-keygen -p -m pem 转换。"></textarea>
             </div>
 
             <input type="hidden" id="command" name="command" value="">

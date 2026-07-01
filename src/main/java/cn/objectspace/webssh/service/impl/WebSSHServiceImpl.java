@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -135,6 +137,8 @@ public class WebSSHServiceImpl implements WebSSHService {
         if (sshConnectInfo != null) {
             //断开连接
             if (sshConnectInfo.getChannel() != null) sshConnectInfo.getChannel().disconnect();
+            //清理本次会话的临时私钥文件
+            deletePrivateKeyFile(sshConnectInfo.getPrivateKey());
             //map中移除
             sshMap.remove(userId);
         }
@@ -154,12 +158,23 @@ public class WebSSHServiceImpl implements WebSSHService {
         map.put("res", "");
         map.put("msg", "");
         boolean res = false;
+        String tempKeyFile = null;
 
         try {
+            // 若前端提交了私钥内容，写入临时文件并加载
+            tempKeyFile = writePrivateKeyToTempFile(data.getPrivateKey());
+            if (tempKeyFile != null) {
+                if (password != null && !password.isEmpty()) {
+                    jSch.addIdentity(tempKeyFile, password);
+                } else {
+                    jSch.addIdentity(tempKeyFile);
+                }
+            }
+
             // 根据主机账号、ip、端口获取一个Session对象
             jSchSession = jSch.getSession(username, host, port);
 
-            // 存放主机密码
+            // 存放主机密码（私钥登录时也可作为私钥口令）
             jSchSession.setPassword(password);
 
             Properties config = new Properties();
@@ -181,7 +196,12 @@ public class WebSSHServiceImpl implements WebSSHService {
         } catch (JSchException e) {
             logger.warn(e.getMessage());
             map.put("msg", e.getMessage());
+        } catch (IOException e) {
+            logger.warn("私钥写入临时文件失败", e);
+            map.put("msg", "私钥处理失败：" + e.getMessage());
         } finally {
+            // 清理测试时产生的临时私钥文件
+            deletePrivateKeyFile(tempKeyFile);
             // 关闭jschSesson流
             if (jSchSession != null && jSchSession.isConnected()) {
                 jSchSession.disconnect();
@@ -212,9 +232,17 @@ public class WebSSHServiceImpl implements WebSSHService {
         session = sshConnectInfo.getjSch().getSession(webSSHData.getUsername(), webSSHData.getHost(), webSSHData.getPort());
         session.setConfig(config);
 
-        // Have private key? 公钥登陆只能在本地，无法通过服务器来访问文件，jsch只允许传递一个文件的目录。
-        if(!Objects.isNull(sshConnectInfo.getPrivateKey())){
-            sshConnectInfo.getjSch().addIdentity(sshConnectInfo.getPrivateKey());
+        // 若前端提交了私钥内容，写入本次会话的临时文件并加载；密码字段同时作为私钥口令
+        String privateKeyContent = webSSHData.getPrivateKey();
+        String tempKeyFile = writePrivateKeyToTempFile(privateKeyContent);
+        if (tempKeyFile != null) {
+            sshConnectInfo.setPrivateKey(tempKeyFile);
+            String passphrase = webSSHData.getPassword();
+            if (passphrase != null && !passphrase.isEmpty()) {
+                sshConnectInfo.getjSch().addIdentity(tempKeyFile, passphrase);
+            } else {
+                sshConnectInfo.getjSch().addIdentity(tempKeyFile);
+            }
         }
 
         //设置密码
@@ -264,6 +292,33 @@ public class WebSSHServiceImpl implements WebSSHService {
             }
         }
         return res;
+    }
+
+    /**
+     * 把私钥内容写入本次会话的临时文件，返回临时文件绝对路径；无私钥时返回 null。
+     */
+    private String writePrivateKeyToTempFile(String privateKey) throws IOException {
+        if (privateKey == null || privateKey.trim().isEmpty()) {
+            return null;
+        }
+        File temp = File.createTempFile("webssh-pk-", ".key");
+        temp.deleteOnExit();
+        try (FileWriter writer = new FileWriter(temp)) {
+            writer.write(privateKey.trim());
+        }
+        return temp.getAbsolutePath();
+    }
+
+    /**
+     * 删除临时私钥文件
+     */
+    private void deletePrivateKeyFile(String path) {
+        if (path != null && !path.isEmpty()) {
+            try {
+                new File(path).delete();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     /**
