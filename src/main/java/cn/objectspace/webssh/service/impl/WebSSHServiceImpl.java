@@ -141,7 +141,7 @@ public class WebSSHServiceImpl implements WebSSHService {
     }
 
     @Override
-    public Map<String, String> testConnect(HostData data) throws JSchException {
+    public Map<String, String> testConnect(HostData data) {
         String username = data.getUsername();
         String password = data.getPassword();
         String host = data.getHost();
@@ -149,7 +149,6 @@ public class WebSSHServiceImpl implements WebSSHService {
 
         // 创建JSch对象
         JSch jSch = new JSch();
-        jSch.addIdentity("/Users/fu/.ssh/id_rsa");
         Session jSchSession = null;
         Map<String, String> map = new HashMap<>();
         map.put("res", "");
