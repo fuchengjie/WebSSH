@@ -12,3 +12,10 @@ spring:
       prefix: classpath:/templates/
       suffix: .html
       encoding: UTF-8
+webssh:
+  # WebSocket 允许的来源，留空则允许任意源（仅适合内网调试）
+  # 公网部署请填写明确来源，例如：
+  # allowed-origins:
+  #   - http://localhost
+  #   - http://127.0.0.1
+  allowed-origins:
