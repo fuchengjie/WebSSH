@@ -5,16 +5,19 @@
 
 
 目前添加的功能有： 
-- 前端登录界面 
-- 终端显示优化
-- 文件管理功能：支持查看远程目录、上传、下载、删除文件、创建目录，默认目录为 `/tmp/`，也可以手动切换到其他目录
+- 前端登录界面：输入 SSH 信息后会先进行连接测试，再进入终端
+- 深色终端界面：终端占满主区域，顶部状态栏显示连接信息，左侧文件抽屉可折叠，支持响应式布局
+- 文件管理功能：支持查看远程目录、上传（含拖拽上传）、下载、删除文件、创建目录，默认目录为 `/tmp/`，也可以手动切换到其他目录
 - 测试连接功能
-- 公钥登陆，因为jsch版本问题，你的id_rsa是"-----BEGIN OPENSSH PRIVATE KEY-----"开头，那么使用命令 `ssh-keygen -p -f <privateKeyFile> -m pem` 转换一下格式
+- 公钥登陆，因为 jsch 版本问题，你的 id_rsa 是 "-----BEGIN OPENSSH PRIVATE KEY-----" 开头，那么使用命令 `ssh-keygen -p -f <privateKeyFile> -m pem` 转换一下格式
 
 特色（feature）
 - 跨平台（cross platform）
 - 浏览器环境（browser-in）
-- 支持远程文件管理（file manager）
+- 深色终端优先的现代化界面
+- 可折叠的远程文件管理抽屉
+- 支持拖拽上传与文件列表操作
+- 支持响应式布局
 
 ## AI 协助说明
 
@@ -23,18 +26,11 @@
 这次修改由 AI 辅助完成：AI 直接重构了前后端文件管理逻辑，补上了远程目录浏览、上传位置提示、下载、删除、新建目录、终端自适应等能力。现在 AI 编程能力已经很强了，这类以前卡住很久的功能，可以直接让 AI 读代码、改代码、跑测试并验证效果。
 
 ## 图片展示
-前端登录界面（AI 辅助重构）
-![前端登录界面](docs/readme-login-ai.png)
+前端登录界面
+![前端登录界面](docs/screenshot-login.png)
 
-终端和远程文件管理（AI 辅助重构）
-![终端和远程文件管理](docs/readme-file-manager.png)
-
-终端显示优化
-![image](https://user-images.githubusercontent.com/31361595/184619160-1df7604d-9a88-435d-8ac2-592161d9eadf.png)
-
-当无法连接到主机时，登录界面显示错误信息
-![image](https://user-images.githubusercontent.com/31361595/184631740-4f45d221-4fa7-4076-86b1-2d5cc4ef6dff.png)
-
+终端与远程文件管理（深色终端优先风格）
+![终端与远程文件管理](docs/screenshot-terminal.png)
 
 技术架构图
 ![image](https://user-images.githubusercontent.com/31361595/184622254-99fe8b44-c4d1-45f0-a1c9-4c0d742490f5.png)
