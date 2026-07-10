@@ -21,6 +21,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -301,12 +306,22 @@ public class WebSSHServiceImpl implements WebSSHService {
         if (privateKey == null || privateKey.trim().isEmpty()) {
             return null;
         }
-        File temp = File.createTempFile("webssh-pk-", ".key");
-        temp.deleteOnExit();
-        try (FileWriter writer = new FileWriter(temp)) {
+        Path temp;
+        try {
+            // POSIX 系统在创建时即限定为仅属主可读写，避免临时私钥被同机其他用户读取
+            FileAttribute<Set<PosixFilePermission>> attr =
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rw-------"));
+            temp = Files.createTempFile("webssh-pk-", ".key", attr);
+        } catch (UnsupportedOperationException e) {
+            // Windows 等非 POSIX 文件系统不支持 POSIX 权限，退回默认临时文件
+            temp = Files.createTempFile("webssh-pk-", ".key");
+        }
+        File tempFile = temp.toFile();
+        tempFile.deleteOnExit();
+        try (FileWriter writer = new FileWriter(tempFile)) {
             writer.write(privateKey.trim());
         }
-        return temp.getAbsolutePath();
+        return tempFile.getAbsolutePath();
     }
 
     /**
