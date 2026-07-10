@@ -16,136 +16,597 @@
     <script src="/static/plugins/xterm/xterm-addon-fit.js" charset="utf-8"></script>
 
     <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --panel-hover: #1f242c;
+            --border: #30363d;
+            --text: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-hover: #79b8ff;
+            --success: #3fb950;
+            --danger: #f85149;
+            --warning: #d29922;
+            --terminal-bg: #000000;
+        }
+
         * { box-sizing: border-box; }
-        html, body { height: 100%; margin: 0; overflow: hidden; background: #f4f6f8; }
-        .app-shell { height: 100vh; min-height: 0; display: flex; flex-direction: column; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .app-shell {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 顶部状态栏 */
         .topbar {
-            height: 56px;
+            height: 52px;
+            flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 18px;
-            background: #20252f;
-            color: #fff;
-            border-bottom: 1px solid #111722;
+            padding: 0 16px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            z-index: 20;
         }
-        .brand { font-size: 18px; font-weight: 600; }
-        .host-meta { color: #c8d0dc; font-size: 13px; }
-        .workspace { min-height: 0; flex: 1; display: grid; grid-template-columns: 380px minmax(0, 1fr); }
-        .file-panel {
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.3px;
+        }
+
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .host-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.25);
+            border-radius: 20px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 13px;
+            color: var(--accent);
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toolbar-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
+            padding: 0 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--panel-hover);
+            color: var(--text);
+            border-color: var(--text-secondary);
+        }
+
+        .toolbar-btn.danger:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+        }
+
+        .status-dot.disconnected {
+            background: var(--danger);
+            box-shadow: 0 0 6px var(--danger);
+        }
+
+        /* 主工作区 */
+        .workspace {
+            flex: 1;
             min-height: 0;
-            min-width: 0;
+            display: flex;
+            position: relative;
+        }
+
+        /* 文件抽屉 */
+        .file-drawer {
+            width: 320px;
+            flex-shrink: 0;
             display: flex;
             flex-direction: column;
-            border-right: 1px solid #d8dee8;
-            background: #fff;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            transition: margin-left 0.25s ease;
         }
-        .panel-header { padding: 14px 16px 10px; border-bottom: 1px solid #edf0f5; }
-        .panel-title { margin: 0 0 10px; font-size: 16px; font-weight: 600; color: #1f2937; }
-        .path-row { display: flex; gap: 8px; }
-        .path-row .layui-input { height: 34px; }
-        .file-actions {
-            display: grid;
-            grid-template-columns: 1fr auto auto;
-            gap: 8px;
-            padding: 12px 16px;
-            border-bottom: 1px solid #edf0f5;
+
+        .file-drawer.collapsed {
+            margin-left: -320px;
+        }
+
+        .drawer-header {
+            display: flex;
             align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
         }
-        .file-actions input[type="file"] { min-width: 0; }
-        .status-line {
-            min-height: 28px;
-            padding: 6px 16px;
-            color: #596579;
+
+        .drawer-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .drawer-close {
+            display: none;
+            width: 26px;
+            height: 26px;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 0;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .drawer-close:hover {
+            background: var(--panel-hover);
+            color: var(--text);
+        }
+
+        /* 路径栏 */
+        .path-bar {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .path-input-wrap {
+            display: flex;
+            gap: 8px;
+        }
+
+        .path-input-wrap input {
+            flex: 1;
+            min-width: 0;
+            height: 34px;
+            padding: 0 10px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+            font-size: 13px;
+        }
+
+        .path-input-wrap input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--panel-hover);
+            color: var(--text);
+            border-color: var(--text-secondary);
+        }
+
+        /* 上传区 */
+        .upload-zone {
+            margin: 12px 16px;
+            padding: 14px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(88, 166, 255, 0.08);
+        }
+
+        .upload-zone-text {
+            color: var(--text-secondary);
             font-size: 12px;
-            border-bottom: 1px solid #edf0f5;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .upload-zone-text i {
+            display: block;
+            font-size: 22px;
+            margin-bottom: 6px;
+            color: var(--accent);
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .upload-actions input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            height: 30px;
+            padding: 0 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-default {
+            background: var(--bg);
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .btn-default:hover {
+            background: var(--panel-hover);
+            border-color: var(--text-secondary);
+        }
+
+        .file-hint {
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            word-break: break-all;
+        }
+
+        /* 文件列表 */
+        .file-list-wrap {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .file-table thead th {
+            position: sticky;
+            top: 0;
+            padding: 8px 12px;
+            background: var(--panel);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            z-index: 1;
+        }
+
+        .file-table tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            vertical-align: middle;
+        }
+
+        .file-table tbody tr:hover {
+            background: var(--panel-hover);
+        }
+
+        .file-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 140px;
+        }
+
+        .file-name-cell i {
+            font-size: 15px;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .file-name-cell i.dir-icon {
+            color: var(--warning);
+        }
+
+        .file-name-cell a, .file-name-cell span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-name-cell a {
+            color: var(--text);
+            cursor: pointer;
+        }
+
+        .file-name-cell a:hover {
+            color: var(--accent);
+        }
+
+        .file-table .muted {
+            color: var(--text-secondary);
+        }
+
+        .file-actions-cell {
+            white-space: nowrap;
+        }
+
+        .file-action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            margin-right: 2px;
+            background: transparent;
+            border: 0;
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .file-action-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+        }
+
+        .file-action-btn.danger:hover {
+            color: var(--danger);
+        }
+
+        .empty-row {
+            padding: 32px 16px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* 抽屉底部状态栏 */
+        .drawer-footer {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 12px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        .file-list-wrap {
-            min-height: 0;
-            flex: 1 1 auto;
-            overflow-y: auto;
-            overflow-x: hidden;
-            overscroll-behavior: contain;
-        }
-        .file-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .file-table th, .file-table td { padding: 9px 10px; border-bottom: 1px solid #edf0f5; vertical-align: middle; }
-        .file-table th { position: sticky; top: 0; background: #f8fafc; color: #667085; font-weight: 600; z-index: 1; }
-        .file-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .file-name a { color: #1f6feb; cursor: pointer; }
-        .muted { color: #8792a2; }
-        .empty-row { padding: 28px 16px; color: #8792a2; text-align: center; }
-        .icon-btn {
-            border: 0;
-            background: transparent;
-            cursor: pointer;
-            color: #3b4556;
-            padding: 3px 4px;
-            line-height: 1;
-        }
-        .icon-btn:hover { color: #1f6feb; }
-        .danger:hover { color: #c0392b; }
-        .terminal-panel { min-height: 0; min-width: 0; display: flex; flex-direction: column; background: #fff; }
-        .terminal-title {
-            height: 42px;
+
+        /* 终端区域 */
+        .terminal-panel {
+            flex: 1;
+            min-width: 0;
             display: flex;
-            align-items: center;
-            padding: 0 22px;
-            border-bottom: 1px solid #edf0f5;
-            color: #263446;
+            flex-direction: column;
+            background: var(--terminal-bg);
+            position: relative;
         }
-        .terminal-wrap { min-height: 0; flex: 1; padding: 12px 22px 18px; }
-        #container { width: 100%; height: 100%; background: #000; }
-        @media (max-width: 980px) {
-            html, body { overflow: auto; }
-            .workspace { grid-template-columns: 1fr; grid-template-rows: minmax(360px, 48vh) minmax(420px, 52vh); }
-            .file-panel { border-right: 0; border-bottom: 1px solid #d8dee8; }
+
+        .terminal-wrap {
+            flex: 1;
+            min-height: 0;
+            padding: 0;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 展开抽屉的悬浮按钮（抽屉折叠后显示） */
+        .drawer-toggle {
+            position: absolute;
+            left: 12px;
+            top: 12px;
+            z-index: 10;
+            width: 34px;
+            height: 34px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .drawer-toggle:hover {
+            color: var(--text);
+            border-color: var(--text-secondary);
+        }
+
+        /* 抽屉折叠时显示展开按钮 */
+        .file-drawer.collapsed ~ .terminal-panel .drawer-toggle {
+            display: inline-flex;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .file-drawer {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 30;
+                box-shadow: 2px 0 12px rgba(0, 0, 0, 0.5);
+            }
+
+            .file-drawer.collapsed {
+                margin-left: -320px;
+                box-shadow: none;
+            }
+
+            .drawer-close {
+                display: inline-flex;
+            }
+
+            .drawer-toggle {
+                display: inline-flex;
+            }
+
+            .host-badge span {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 <div class="app-shell">
-    <div class="topbar">
-        <div class="brand">webssh</div>
-        <div class="host-meta">[[${data.username}]]@[[${data.host}]]:[[${data.port}]]</div>
-    </div>
+    <!-- 顶部状态栏 -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="brand">
+                <span class="brand-mark">$_</span>
+                <span>WebSSH</span>
+            </div>
+            <div class="host-badge" title="当前连接">
+                <span class="status-dot" id="connStatus"></span>
+                <span>[[${data.username}]]@[[${data.host}]]:[[${data.port}]]</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button type="button" class="toolbar-btn" id="btnToggleDrawer" title="切换文件面板">
+                <i class="layui-icon layui-icon-template-1"></i> 文件
+            </button>
+            <button type="button" class="toolbar-btn danger" id="btnDisconnect" title="断开连接">
+                <i class="layui-icon layui-icon-close"></i> 断开
+            </button>
+        </div>
+    </header>
 
     <div class="workspace">
-        <aside class="file-panel">
-            <div class="panel-header">
-                <h2 class="panel-title">远程文件</h2>
-                <div class="path-row">
-                    <input type="text" id="remotePath" class="layui-input" value="/tmp/" autocomplete="off">
-                    <button type="button" id="btnParent" class="layui-btn layui-btn-primary layui-btn-sm" title="上级目录">
+        <!-- 左侧文件抽屉 -->
+        <aside class="file-drawer" id="fileDrawer">
+            <div class="drawer-header">
+                <div class="drawer-title">
+                    <i class="layui-icon layui-icon-template-1"></i>
+                    远程文件
+                </div>
+                <button type="button" class="drawer-close" id="btnCloseDrawer" title="关闭">
+                    <i class="layui-icon layui-icon-close"></i>
+                </button>
+            </div>
+
+            <div class="path-bar">
+                <div class="path-input-wrap">
+                    <input type="text" id="remotePath" value="/tmp/" autocomplete="off" placeholder="输入远程目录">
+                    <button type="button" class="icon-btn" id="btnParent" title="上级目录">
                         <i class="layui-icon layui-icon-up"></i>
                     </button>
-                    <button type="button" id="btnRefresh" class="layui-btn layui-btn-normal layui-btn-sm" title="刷新">
+                    <button type="button" class="icon-btn" id="btnRefresh" title="刷新">
                         <i class="layui-icon layui-icon-refresh"></i>
                     </button>
                 </div>
             </div>
 
-            <div class="file-actions">
-                <input type="file" id="multipartFile">
-                <button type="button" id="btnUpload" class="layui-btn layui-btn-sm">
-                    <i class="layui-icon layui-icon-upload"></i> 上传
-                </button>
-                <button type="button" id="btnMkdir" class="layui-btn layui-btn-primary layui-btn-sm">
-                    <i class="layui-icon layui-icon-add-1"></i> 新目录
-                </button>
+            <div class="upload-zone" id="uploadZone">
+                <div class="upload-zone-text">
+                    <i class="layui-icon layui-icon-upload"></i>
+                    拖拽文件到此处上传<br>或点击选择本地文件
+                </div>
+                <div class="upload-actions">
+                    <input type="file" id="multipartFile">
+                    <button type="button" class="btn btn-primary" id="btnSelectFile">
+                        <i class="layui-icon layui-icon-file"></i> 选择文件
+                    </button>
+                    <button type="button" class="btn btn-default" id="btnMkdir">
+                        <i class="layui-icon layui-icon-add-1"></i> 新目录
+                    </button>
+                </div>
+                <div class="file-hint" id="fileHint">未选择文件</div>
             </div>
 
-            <div id="fileStatus" class="status-line">目录：/tmp/</div>
             <div class="file-list-wrap">
                 <table class="file-table">
                     <thead>
                     <tr>
                         <th>名称</th>
-                        <th style="width: 82px;">大小</th>
-                        <th style="width: 118px;">修改时间</th>
-                        <th style="width: 74px;">操作</th>
+                        <th style="width: 70px;">大小</th>
+                        <th style="width: 90px;">修改时间</th>
+                        <th style="width: 60px;">操作</th>
                     </tr>
                     </thead>
                     <tbody id="fileList">
@@ -153,10 +614,15 @@
                     </tbody>
                 </table>
             </div>
+
+            <div class="drawer-footer" id="fileStatus">目录：/tmp/</div>
         </aside>
 
+        <!-- 右侧终端 -->
         <main class="terminal-panel">
-            <div class="terminal-title">连接主机为 [[${data.host}]]</div>
+            <button type="button" class="drawer-toggle" id="btnOpenDrawer" title="打开文件面板">
+                <i class="layui-icon layui-icon-template-1"></i>
+            </button>
             <div class="terminal-wrap">
                 <div id="container"></div>
             </div>
@@ -173,6 +639,7 @@
     openTerminal("connect", host, port, username, password, "container");
 
     let layerRef = null;
+    let isConnected = true;
 
     // 统一目录格式，保证前端展示和后端接口都使用以 / 结尾的目录路径。
     function normalizePath(path) {
@@ -206,7 +673,7 @@
     }
 
     function setStatus(text, isError) {
-        $('#fileStatus').text(text).css('color', isError ? '#c0392b' : '#596579');
+        $('#fileStatus').text(text).css('color', isError ? 'var(--danger)' : 'var(--text-secondary)');
     }
 
     function escapeHtml(value) {
@@ -234,6 +701,16 @@
         return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
 
+    function updateConnectionStatus(connected) {
+        isConnected = connected;
+        const dot = $('#connStatus');
+        if (connected) {
+            dot.removeClass('disconnected');
+        } else {
+            dot.addClass('disconnected');
+        }
+    }
+
     // 渲染远程目录列表：目录可点击进入，文件可下载或删除。
     function renderFiles(data) {
         const tbody = $('#fileList');
@@ -245,17 +722,18 @@
         data.forEach(function (item) {
             const name = escapeHtml(item.filename);
             const rawName = jsString(item.filename);
+            const iconClass = item.directory ? 'layui-icon-template-1 dir-icon' : 'layui-icon-file';
             const nameCell = item.directory
-                ? '<a onclick="enterDirectory(\'' + rawName + '\')" title="' + name + '"><i class="layui-icon layui-icon-template-1"></i> ' + name + '</a>'
-                : '<span title="' + name + '"><i class="layui-icon layui-icon-file"></i> ' + name + '</span>';
+                ? '<a onclick="enterDirectory(\'' + rawName + '\')" title="' + name + '">' + name + '</a>'
+                : '<span title="' + name + '">' + name + '</span>';
             const downloadBtn = item.directory ? '' :
-                '<a class="icon-btn" onclick="downloadFile(\'' + rawName + '\')" title="下载"><i class="layui-icon layui-icon-download-circle"></i></a>';
+                '<button type="button" class="file-action-btn" onclick="downloadFile(\'' + rawName + '\')" title="下载"><i class="layui-icon layui-icon-download-circle"></i></button>';
             const row = '<tr>' +
-                '<td class="file-name">' + nameCell + '</td>' +
+                '<td><div class="file-name-cell"><i class="layui-icon ' + iconClass + '"></i>' + nameCell + '</div></td>' +
                 '<td class="muted">' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
                 '<td class="muted">' + formatTime(item.modifyTime) + '</td>' +
-                '<td>' + downloadBtn +
-                '<button type="button" class="icon-btn danger" onclick="deleteFile(\'' + rawName + '\')" title="删除"><i class="layui-icon layui-icon-delete"></i></button>' +
+                '<td class="file-actions-cell">' + downloadBtn +
+                '<button type="button" class="file-action-btn danger" onclick="deleteFile(\'' + rawName + '\')" title="删除"><i class="layui-icon layui-icon-delete"></i></button>' +
                 '</td>' +
                 '</tr>';
             tbody.append(row);
@@ -314,15 +792,9 @@
         document.body.removeChild(form);
     }
 
-    // 上传文件到当前远程目录，并在状态栏显示最终远程路径。
-    function uploadFile() {
-        const fileInput = document.getElementById('multipartFile');
-        if (!fileInput.files || fileInput.files.length === 0) {
-            setStatus('请先选择一个本地文件', true);
-            return;
-        }
+    function doUpload(file) {
+        if (!file) return;
         const path = normalizePath($('#remotePath').val());
-        const file = fileInput.files[0];
         const formData = new FormData();
         formData.append('multipartFile', file);
         formData.append('host', host);
@@ -331,6 +803,7 @@
         formData.append('password', password);
         formData.append('remotePath', path);
 
+        $('#fileHint').text('正在上传：' + file.name);
         setStatus('正在上传到 ' + path + '：' + file.name, false);
         $.ajax({
             url: '/upload',
@@ -339,14 +812,26 @@
             processData: false,
             contentType: false,
             success: function (res) {
-                fileInput.value = '';
+                $('#multipartFile').val('');
+                $('#fileHint').text('上传成功：' + file.name);
                 setStatus((res.msg || '上传成功') + '：' + path + file.name, false);
                 refreshList();
             },
             error: function (xhr) {
+                $('#fileHint').text('上传失败：' + file.name);
                 setStatus('上传失败：' + (xhr.responseText || xhr.statusText), true);
             }
         });
+    }
+
+    // 上传文件到当前远程目录，并在状态栏显示最终远程路径。
+    function uploadFile() {
+        const fileInput = document.getElementById('multipartFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            setStatus('请先选择一个本地文件', true);
+            return;
+        }
+        doUpload(fileInput.files[0]);
     }
 
     // 创建子目录后刷新列表，便于继续进入目录上传文件。
@@ -364,18 +849,76 @@
         });
     }
 
+    function toggleDrawer() {
+        $('#fileDrawer').toggleClass('collapsed');
+    }
+
+    function openDrawer() {
+        $('#fileDrawer').removeClass('collapsed');
+    }
+
+    function closeDrawer() {
+        $('#fileDrawer').addClass('collapsed');
+    }
+
     layui.use(['layer'], function () {
         layerRef = layui.layer;
+
+        // 路径与文件操作
         $('#btnRefresh').on('click', refreshList);
         $('#btnParent').on('click', function () {
             $('#remotePath').val(parentPath($('#remotePath').val()));
             refreshList();
         });
-        $('#btnUpload').on('click', uploadFile);
+        $('#btnSelectFile').on('click', function () {
+            $('#multipartFile').trigger('click');
+        });
+        $('#multipartFile').on('change', function () {
+            const files = this.files;
+            if (files && files.length > 0) {
+                $('#fileHint').text('已选择：' + files[0].name);
+                uploadFile();
+            }
+        });
         $('#btnMkdir').on('click', createDirectory);
         $('#remotePath').on('keydown', function (event) {
             if (event.keyCode === 13) refreshList();
         });
+
+        // 抽屉开关
+        $('#btnToggleDrawer').on('click', toggleDrawer);
+        $('#btnCloseDrawer').on('click', closeDrawer);
+        $('#btnOpenDrawer').on('click', openDrawer);
+
+        // 拖拽上传
+        const uploadZone = $('#uploadZone');
+        uploadZone.on('dragover', function (e) {
+            e.preventDefault();
+            uploadZone.addClass('drag-over');
+        });
+        uploadZone.on('dragleave', function (e) {
+            e.preventDefault();
+            uploadZone.removeClass('drag-over');
+        });
+        uploadZone.on('drop', function (e) {
+            e.preventDefault();
+            uploadZone.removeClass('drag-over');
+            const files = e.originalEvent.dataTransfer.files;
+            if (files && files.length > 0) {
+                $('#fileHint').text('已选择：' + files[0].name);
+                doUpload(files[0]);
+            }
+        });
+
+        // 断开连接：关闭页面即可，也可以扩展为调用后端关闭 WebSocket
+        $('#btnDisconnect').on('click', function () {
+            layerRef.confirm('确定断开当前 SSH 连接吗？', {icon: 3, title: '断开连接'}, function (index) {
+                layerRef.close(index);
+                updateConnectionStatus(false);
+                window.close();
+            });
+        });
+
         refreshList();
     });
 </script>
