@@ -245,12 +245,11 @@
         data.forEach(function (item) {
             const name = escapeHtml(item.filename);
             const rawName = jsString(item.filename);
-            const downloadUrl = '/file/download?' + $.param(Object.assign({}, commonParams(), {filename: item.filename}));
             const nameCell = item.directory
                 ? '<a onclick="enterDirectory(\'' + rawName + '\')" title="' + name + '"><i class="layui-icon layui-icon-template-1"></i> ' + name + '</a>'
                 : '<span title="' + name + '"><i class="layui-icon layui-icon-file"></i> ' + name + '</span>';
             const downloadBtn = item.directory ? '' :
-                '<a class="icon-btn" href="' + downloadUrl + '" title="下载"><i class="layui-icon layui-icon-download-circle"></i></a>';
+                '<a class="icon-btn" onclick="downloadFile(\'' + rawName + '\')" title="下载"><i class="layui-icon layui-icon-download-circle"></i></a>';
             const row = '<tr>' +
                 '<td class="file-name">' + nameCell + '</td>' +
                 '<td class="muted">' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
@@ -268,7 +267,7 @@
         const path = normalizePath($('#remotePath').val());
         $('#remotePath').val(path);
         setStatus('正在读取：' + path, false);
-        $.get('/file/list', commonParams(), function (data) {
+        $.post('/file/list', commonParams(), function (data) {
             renderFiles(data);
             setStatus('目录：' + path + '，共 ' + data.length + ' 项', false);
         }).fail(function (xhr) {
@@ -294,6 +293,25 @@
                 setStatus('删除失败：' + (xhr.responseText || xhr.statusText), true);
             });
         });
+    }
+
+    // 用隐藏表单 POST 下载，避免把 SSH 凭据拼进 URL（会进浏览器历史和访问日志）。
+    function downloadFile(filename) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/file/download';
+        form.style.display = 'none';
+        const params = Object.assign({}, commonParams(), {filename: filename});
+        Object.keys(params).forEach(function (key) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = params[key];
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 
     // 上传文件到当前远程目录，并在状态栏显示最终远程路径。

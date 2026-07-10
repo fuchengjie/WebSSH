@@ -66,7 +66,7 @@ public class FileController {
     /**
      * 读取指定远程目录下的文件状态，前端据此展示文件名、大小、类型和修改时间。
      */
-    @GetMapping("file/list")
+    @PostMapping("file/list")
     @ResponseBody
     public Object list(@RequestParam String host,
                        @RequestParam Integer port,
@@ -100,7 +100,7 @@ public class FileController {
     /**
      * 下载当前远程目录中的单个文件。
      */
-    @GetMapping("file/download")
+    @PostMapping("file/download")
     public void download(@RequestParam String host,
                          @RequestParam Integer port,
                          @RequestParam String username,

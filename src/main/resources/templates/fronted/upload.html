@@ -115,7 +115,7 @@
         const path = normalizePath($('#remotePath').val());
         $('#remotePath').val(path);
         setStatus('正在读取：' + path, false);
-        $.get('/file/list', commonParams(), function (data) {
+        $.post('/file/list', commonParams(), function (data) {
             const tbody = $('#fileList');
             tbody.empty();
             if (!Array.isArray(data) || data.length === 0) {
@@ -124,7 +124,6 @@
                 data.forEach(function (item) {
                     const name = escapeHtml(item.filename);
                     const rawName = jsString(item.filename);
-                    const downloadUrl = '/file/download?' + $.param(Object.assign({}, commonParams(), {filename: item.filename}));
                     const nameCell = item.directory
                         ? '<a onclick="enterDirectory(\'' + rawName + '\')">' + name + '</a>'
                         : name;
@@ -133,7 +132,7 @@
                         '<td>' + (item.directory ? '-' : formatSize(item.size)) + '</td>' +
                         '<td>' + formatTime(item.modifyTime) + '</td>' +
                         '<td class="op-btns">' +
-                        (item.directory ? '' : '<a class="layui-btn layui-btn-xs" href="' + downloadUrl + '">下载</a>') +
+                        (item.directory ? '' : '<a class="layui-btn layui-btn-xs" onclick="downloadFile(\'' + rawName + '\')">下载</a>') +
                         '<button type="button" class="layui-btn layui-btn-danger layui-btn-xs" onclick="deleteFile(\'' + rawName + '\')">删除</button>' +
                         '</td>' +
                         '</tr>');
@@ -159,6 +158,24 @@
                 setStatus('删除失败：' + (xhr.responseText || xhr.statusText), true);
             });
         });
+    }
+    // 用隐藏表单 POST 下载，避免把 SSH 凭据拼进 URL（会进浏览器历史和访问日志）。
+    function downloadFile(filename) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/file/download';
+        form.style.display = 'none';
+        const params = Object.assign({}, commonParams(), {filename: filename});
+        Object.keys(params).forEach(function (key) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = params[key];
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
     // 上传文件到当前目录，完成后刷新列表并显示最终远程路径。
     function uploadFile() {
