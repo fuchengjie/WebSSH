@@ -32,7 +32,5 @@ Technical architecture diagram
 Problems solved:
 1. The WebSocket connection between the browser and SpringBoot obtains the server address through the interface instead of being written to 127.0.0.1, so that at least multiple browsers can access the server on the same LAN. On the public network effect, I did not test, there are conditions can try.
 
-Welcome issues and pr (No promise to do it), welcome everyone to participate in the project
-
 <br><br><br><br><br><br><br><br><br><br>
 
