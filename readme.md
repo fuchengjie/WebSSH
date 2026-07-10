@@ -33,7 +33,40 @@
 ![终端与远程文件管理](docs/screenshot-terminal.png)
 
 技术架构图
-![image](https://user-images.githubusercontent.com/31361595/184622254-99fe8b44-c4d1-45f0-a1c9-4c0d742490f5.png)
+
+```mermaid
+flowchart TB
+    subgraph Browser["浏览器"]
+        Login[登录页 index.html]
+        Terminal[终端页 terminal.html
+xterm.js]
+    end
+
+    Login -->|POST /connect| Router[RouterController]
+    Router -->|渲染| Terminal
+
+    Terminal <-->|WebSocket /webssh| Handler[WebSSHWebSocketHandler]
+    Handler -->|查询/写入| Service[WebSSHServiceImpl]
+
+    subgraph SpringBoot["Spring Boot 后端"]
+        Router
+        Handler
+        Service
+        Interceptor[WebSocketInterceptor]
+        FileCtrl[FileController]
+        Pool[(sshMap
+UUID -> SSHConnectInfo)]
+    end
+
+    Interceptor -->|握手时注入 UUID| Handler
+    Service -->|读写| Pool
+    FileCtrl -->|独立 Session| Jsch2[JSch]
+
+    Terminal -->|POST /file/* /upload| FileCtrl
+
+    Service -->|JSch Session + shell| SSH[(SSH 服务器)]
+    Jsch2 -->|JSch Session + sftp| SSH
+```
 
 解决的问题：
 1.浏览器和SpringBoot的WebSocket连接会通过接口获取服务器的地址，而不是直接写死为127.0.0.1，这样至少在同一个局域网中可以有多个浏览器来访问服务器；在公网上效果如何，我并没有进行测试，有条件的可以试试。
