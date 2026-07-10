@@ -44,7 +44,8 @@ public class WebSSHWebSocketHandler implements WebSocketHandler{
     @Override
     public void handleMessage(WebSocketSession webSocketSession, WebSocketMessage<?> webSocketMessage) throws Exception {
         if (webSocketMessage instanceof TextMessage) {
-            logger.info("用户:{},发送命令:{}", webSocketSession.getAttributes().get(ConstantPool.USER_UUID_KEY), webSocketMessage.toString());
+            //只记录消息长度，不记录消息体：connect 消息中携带 password/privateKey，整体打印会把凭据写进日志
+            logger.info("用户:{},发送消息,长度:{}", webSocketSession.getAttributes().get(ConstantPool.USER_UUID_KEY), webSocketMessage.getPayloadLength());
             //调用service接收消息
             webSSHService.recvHandle(((TextMessage) webSocketMessage).getPayload(), webSocketSession);
         } else if (webSocketMessage instanceof BinaryMessage) {
